@@ -1,0 +1,64 @@
+import { ATTRIBUTES } from "./attributes.js";
+import { getRaceById } from "./races.js";
+
+const BASE_ATTRIBUTE_VALUE = 10;
+const BASE_POTENTIAL_VALUE = 60;
+const RANDOM_VARIATION = 4; // variación aleatoria +/- al generar un atributo
+
+function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+/**
+ * Genera el bloque de atributos inicial de un personaje para una raza dada.
+ *
+ * Cada atributo tiene un valor `actual` (nivel presente) y un `potencial`
+ * (hasta dónde podría desarrollarse naturalmente), conforme a la sección
+ * 9.3 del documento de diseño. Las afinidades raciales desplazan
+ * ligeramente el potencial de partida, sin imponer límites absolutos.
+ */
+export function generateAttributes(raceId) {
+  const race = getRaceById(raceId);
+  const affinities = race?.attributeAffinities ?? {};
+
+  return ATTRIBUTES.reduce((attributes, attribute) => {
+    const affinityBonus = affinities[attribute.id] ?? 0;
+    const actual = randomInt(
+      BASE_ATTRIBUTE_VALUE - RANDOM_VARIATION,
+      BASE_ATTRIBUTE_VALUE + RANDOM_VARIATION
+    );
+    const potencial = randomInt(
+      BASE_POTENTIAL_VALUE - RANDOM_VARIATION,
+      BASE_POTENTIAL_VALUE + RANDOM_VARIATION
+    ) + affinityBonus * 5;
+
+    attributes[attribute.id] = { actual, potencial };
+    return attributes;
+  }, {});
+}
+
+/**
+ * Crea un personaje inicial a partir de una raza y unos datos básicos.
+ * Este es un punto de partida deliberadamente simple: rasgos, personalidad,
+ * habilidades y origen se irán añadiendo de forma incremental.
+ */
+export function createCharacter({ name, raceId, sex, birthRegion }) {
+  const race = getRaceById(raceId);
+  if (!race) {
+    throw new Error(`Raza desconocida: ${raceId}`);
+  }
+  if (!race.playable) {
+    throw new Error(`La raza "${race.name}" no es jugable.`);
+  }
+
+  return {
+    name,
+    raceId,
+    sex,
+    birthRegion: birthRegion ?? null,
+    ageYears: race.biology.lifespan.maturityAge ?? 16,
+    attributes: generateAttributes(raceId),
+    traits: [],
+    skills: [],
+  };
+}
