@@ -93,6 +93,14 @@ section h2 {
   color: #e6e1f5;
 }
 
+.character-form select {
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #4a4468;
+  background: #1e1b2e;
+  color: #e6e1f5;
+}
+
 .character-form button {
   padding: 0.5rem 1.25rem;
   border-radius: 6px;

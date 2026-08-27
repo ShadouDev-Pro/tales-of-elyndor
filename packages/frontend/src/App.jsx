@@ -65,20 +65,61 @@ function AttributeGrid({ attributes, characterAttributes }) {
   );
 }
 
+function CharacterList({ characters, races, onDelete }) {
+  if (characters.length === 0) {
+    return <p className="empty-state">Todavía no has creado ningún personaje.</p>;
+  }
+
+  return (
+    <ul className="character-list">
+      {characters.map((char) => (
+        <li key={char.id} className="character-list-item">
+          <div>
+            <strong>{char.name}</strong>{" "}
+            <span className="character-race">
+              ({races?.find((r) => r.id === char.raceId)?.name ?? char.raceId})
+            </span>
+          </div>
+          <button className="delete-button" onClick={() => onDelete(char.id)}>
+            Eliminar
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function App() {
   const { data: races, error: racesError } = useApi("/api/races?playable=true");
   const { data: attributes, error: attributesError } = useApi("/api/attributes");
 
   const [selectedRaceId, setSelectedRaceId] = useState(null);
   const [characterName, setCharacterName] = useState("");
+  const [characterSex, setCharacterSex] = useState("masculino");
+  const [birthRegion, setBirthRegion] = useState("");
   const [character, setCharacter] = useState(null);
   const [creationError, setCreationError] = useState(null);
+  const [characters, setCharacters] = useState([]);
 
   useEffect(() => {
     if (races && races.length > 0 && !selectedRaceId) {
       setSelectedRaceId(races[0].id);
     }
   }, [races, selectedRaceId]);
+
+  async function refreshCharacters() {
+  try {
+    const res = await fetch("/api/characters");
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    setCharacters(await res.json());
+  } catch (err) {
+    console.error("No se pudieron cargar los personajes:", err.message);
+  }
+  }
+
+  useEffect(() => {
+    refreshCharacters();
+  }, []);
 
   async function handleCreateCharacter(event) {
     event.preventDefault();
@@ -90,6 +131,8 @@ function App() {
         body: JSON.stringify({
           name: characterName || "Sin nombre",
           raceId: selectedRaceId,
+          sex: characterSex,
+          birthRegion: birthRegion || null,
         }),
       });
       if (!res.ok) {
@@ -97,9 +140,22 @@ function App() {
         throw new Error(body.error || "No se pudo crear el personaje.");
       }
       setCharacter(await res.json());
+      await refreshCharacters();
     } catch (err) {
       setCreationError(err.message);
     }
+  }
+
+  async function handleDeleteCharacter(id) {
+  try {
+    const res = await fetch(`/api/characters/${id}`, { method: "DELETE" });
+    if (!res.ok && res.status !== 204) {
+      throw new Error(`${res.status} ${res.statusText}`);
+    }
+    await refreshCharacters();
+  } catch (err) {
+    console.error("No se pudo eliminar el personaje:", err.message);
+  }
   }
 
   return (
@@ -128,6 +184,11 @@ function App() {
           <AttributeGrid attributes={attributes} characterAttributes={character?.attributes} />
         </section>
       )}
+      
+      <section>
+        <h2>Personajes guardados</h2>
+        <CharacterList characters={characters} races={races} onDelete={handleDeleteCharacter} />
+      </section>
 
       <section>
         <h2>Generar personaje</h2>
@@ -138,6 +199,16 @@ function App() {
             value={characterName}
             onChange={(event) => setCharacterName(event.target.value)}
           />
+        <select value={characterSex} onChange={(event) => setCharacterSex(event.target.value)}>
+          <option value="masculino">Masculino</option>
+          <option value="femenino">Femenino</option>
+        </select>
+        <input
+          type="text"
+          placeholder="Región de nacimiento (opcional)"
+          value={birthRegion}
+          onChange={(event) => setBirthRegion(event.target.value)}
+        />
           <button type="submit" disabled={!selectedRaceId}>
             Crear personaje
           </button>
