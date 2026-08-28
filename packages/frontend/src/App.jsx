@@ -65,26 +65,38 @@ function AttributeGrid({ attributes, characterAttributes }) {
   );
 }
 
-function CharacterList({ characters, races, onDelete }) {
+function CharacterList({ characters, races, onDelete, onAdvanceTime }) {
   if (characters.length === 0) {
     return <p className="empty-state">Todavía no has creado ningún personaje.</p>;
   }
 
   return (
     <ul className="character-list">
-      {characters.map((char) => (
-        <li key={char.id} className="character-list-item">
-          <div>
-            <strong>{char.name}</strong>{" "}
-            <span className="character-race">
-              ({races?.find((r) => r.id === char.raceId)?.name ?? char.raceId})
-            </span>
-          </div>
-          <button className="delete-button" onClick={() => onDelete(char.id)}>
-            Eliminar
-          </button>
-        </li>
-      ))}
+      {characters.map((char) => {
+        const ageYears = Math.floor(char.ageDays / 365);
+        return (
+          <li key={char.id} className="character-list-item">
+            <div>
+              <strong>{char.name}</strong>{" "}
+              <span className="character-race">
+                ({races?.find((r) => r.id === char.raceId)?.name ?? char.raceId})
+              </span>
+              <span className="character-age"> · {ageYears} años</span>
+            </div>
+            <div className="character-actions">
+              <button className="advance-time-button" onClick={() => onAdvanceTime(char.id, 365)}>
+                +1 año
+              </button>
+              <button className="advance-time-button" onClick={() => onAdvanceTime(char.id, 30)}>
+                +1 mes
+              </button>
+              <button className="delete-button" onClick={() => onDelete(char.id)}>
+                Eliminar
+              </button>
+            </div>
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -158,6 +170,20 @@ function App() {
   }
   }
 
+  async function handleAdvanceTime(id, days) {
+  try {
+    const res = await fetch(`/api/characters/${id}/advance-time`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ days }),
+    });
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    await refreshCharacters();
+  } catch (err) {
+    console.error("No se pudo avanzar el tiempo:", err.message);
+  }
+}
+
   return (
     <div className="app">
       <header>
@@ -187,7 +213,7 @@ function App() {
       
       <section>
         <h2>Personajes guardados</h2>
-        <CharacterList characters={characters} races={races} onDelete={handleDeleteCharacter} />
+        <CharacterList characters={characters} races={races} onDelete={handleDeleteCharacter} onAdvanceTime={handleAdvanceTime} />
       </section>
 
       <section>

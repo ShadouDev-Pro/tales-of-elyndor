@@ -11,7 +11,7 @@ function rowToCharacter(row) {
     raceId: row.raza_id,
     sex: row.sexo,
     birthRegion: row.region_nacimiento,
-    ageYears: row.edad_anios,
+    ageDays: row.edad_dias,
     attributes: row.atributos,
     personality: row.personalidad,
     traits: row.rasgos,
@@ -67,7 +67,7 @@ charactersRouter.post("/", async (req, res) => {
     const character = createCharacter({ name, raceId, sex, birthRegion });
 
     const result = await pool.query(
-      `INSERT INTO personajes (nombre, raza_id, sexo, region_nacimiento, edad_anios, atributos, personalidad, rasgos, habilidades)
+      `INSERT INTO personajes (nombre, raza_id, sexo, region_nacimiento, edad_dias, atributos, personalidad, rasgos, habilidades)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
       [
@@ -75,7 +75,7 @@ charactersRouter.post("/", async (req, res) => {
         character.raceId,
         character.sex ?? null,
         character.birthRegion,
-        character.ageYears,
+        character.ageDays,
         JSON.stringify(character.attributes),
         JSON.stringify(character.personality),
         JSON.stringify(character.traits),
@@ -102,5 +102,30 @@ charactersRouter.delete("/:id", async (req, res) => {
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: "Error al eliminar el personaje." });
+  }
+});
+
+// POST /api/characters/:id/advance-time  { days }
+charactersRouter.post("/:id/advance-time", async (req, res) => {
+  const { days } = req.body ?? {};
+
+  if (!Number.isInteger(days) || days <= 0) {
+    return res.status(400).json({ error: "'days' debe ser un entero positivo." });
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE personajes
+       SET edad_dias = edad_dias + $1
+       WHERE id = $2
+       RETURNING *`,
+      [days, req.params.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: `Personaje "${req.params.id}" no encontrado.` });
+    }
+    res.json(rowToCharacter(result.rows[0]));
+  } catch (error) {
+    res.status(500).json({ error: "Error al avanzar el tiempo del personaje." });
   }
 });

@@ -73,10 +73,21 @@ export function createCharacter({ name, raceId, sex, birthRegion }) {
     raceId,
     sex,
     birthRegion: birthRegion ?? null,
-    ageYears: race.biology.lifespan.maturityAge ?? 16,
+    ageDays: yearsToDays(race.biology.lifespan.maturityAge ?? 16),
     attributes: generateAttributes(raceId),
     personality: generatePersonality(),
     traits: [],
     skills: [],
   };
+}
+
+
+const DAYS_PER_YEAR = 365;
+
+export function yearsToDays(years) {
+  return Math.round(years * DAYS_PER_YEAR);
+}
+
+export function daysToYears(days) {
+  return Math.floor(days / DAYS_PER_YEAR);
 }
