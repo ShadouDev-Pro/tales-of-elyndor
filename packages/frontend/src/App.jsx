@@ -65,20 +65,73 @@ function AttributeGrid({ attributes, characterAttributes }) {
   );
 }
 
+function CharacterList({ characters, races, onDelete, onAdvanceTime }) {
+  if (characters.length === 0) {
+    return <p className="empty-state">Todavía no has creado ningún personaje.</p>;
+  }
+
+  return (
+    <ul className="character-list">
+      {characters.map((char) => {
+        const ageYears = Math.floor(char.ageDays / 365);
+        return (
+          <li key={char.id} className="character-list-item">
+            <div>
+              <strong>{char.name}</strong>{" "}
+              <span className="character-race">
+                ({races?.find((r) => r.id === char.raceId)?.name ?? char.raceId})
+              </span>
+              <span className="character-age"> · {ageYears} años</span>
+            </div>
+            <div className="character-actions">
+              <button className="advance-time-button" onClick={() => onAdvanceTime(char.id, 365)}>
+                +1 año
+              </button>
+              <button className="advance-time-button" onClick={() => onAdvanceTime(char.id, 30)}>
+                +1 mes
+              </button>
+              <button className="delete-button" onClick={() => onDelete(char.id)}>
+                Eliminar
+              </button>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 function App() {
   const { data: races, error: racesError } = useApi("/api/races?playable=true");
   const { data: attributes, error: attributesError } = useApi("/api/attributes");
 
   const [selectedRaceId, setSelectedRaceId] = useState(null);
   const [characterName, setCharacterName] = useState("");
+  const [characterSex, setCharacterSex] = useState("masculino");
+  const [birthRegion, setBirthRegion] = useState("");
   const [character, setCharacter] = useState(null);
   const [creationError, setCreationError] = useState(null);
+  const [characters, setCharacters] = useState([]);
 
   useEffect(() => {
     if (races && races.length > 0 && !selectedRaceId) {
       setSelectedRaceId(races[0].id);
     }
   }, [races, selectedRaceId]);
+
+  async function refreshCharacters() {
+  try {
+    const res = await fetch("/api/characters");
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    setCharacters(await res.json());
+  } catch (err) {
+    console.error("No se pudieron cargar los personajes:", err.message);
+  }
+  }
+
+  useEffect(() => {
+    refreshCharacters();
+  }, []);
 
   async function handleCreateCharacter(event) {
     event.preventDefault();
@@ -90,6 +143,8 @@ function App() {
         body: JSON.stringify({
           name: characterName || "Sin nombre",
           raceId: selectedRaceId,
+          sex: characterSex,
+          birthRegion: birthRegion || null,
         }),
       });
       if (!res.ok) {
@@ -97,10 +152,37 @@ function App() {
         throw new Error(body.error || "No se pudo crear el personaje.");
       }
       setCharacter(await res.json());
+      await refreshCharacters();
     } catch (err) {
       setCreationError(err.message);
     }
   }
+
+  async function handleDeleteCharacter(id) {
+  try {
+    const res = await fetch(`/api/characters/${id}`, { method: "DELETE" });
+    if (!res.ok && res.status !== 204) {
+      throw new Error(`${res.status} ${res.statusText}`);
+    }
+    await refreshCharacters();
+  } catch (err) {
+    console.error("No se pudo eliminar el personaje:", err.message);
+  }
+  }
+
+  async function handleAdvanceTime(id, days) {
+  try {
+    const res = await fetch(`/api/characters/${id}/advance-time`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ days }),
+    });
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    await refreshCharacters();
+  } catch (err) {
+    console.error("No se pudo avanzar el tiempo:", err.message);
+  }
+}
 
   return (
     <div className="app">
@@ -128,6 +210,11 @@ function App() {
           <AttributeGrid attributes={attributes} characterAttributes={character?.attributes} />
         </section>
       )}
+      
+      <section>
+        <h2>Personajes guardados</h2>
+        <CharacterList characters={characters} races={races} onDelete={handleDeleteCharacter} onAdvanceTime={handleAdvanceTime} />
+      </section>
 
       <section>
         <h2>Generar personaje</h2>
@@ -138,6 +225,16 @@ function App() {
             value={characterName}
             onChange={(event) => setCharacterName(event.target.value)}
           />
+        <select value={characterSex} onChange={(event) => setCharacterSex(event.target.value)}>
+          <option value="masculino">Masculino</option>
+          <option value="femenino">Femenino</option>
+        </select>
+        <input
+          type="text"
+          placeholder="Región de nacimiento (opcional)"
+          value={birthRegion}
+          onChange={(event) => setBirthRegion(event.target.value)}
+        />
           <button type="submit" disabled={!selectedRaceId}>
             Crear personaje
           </button>

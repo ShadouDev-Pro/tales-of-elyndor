@@ -1,5 +1,6 @@
 import { ATTRIBUTES } from "./attributes.js";
 import { getRaceById } from "./races.js";
+import { PERSONALITY_DIMENSIONS } from "./personality.js";
 
 const BASE_ATTRIBUTE_VALUE = 10;
 const BASE_POTENTIAL_VALUE = 60;
@@ -37,6 +38,22 @@ export function generateAttributes(raceId) {
   }, {});
 }
 
+const PERSONALITY_MIN = 0;
+const PERSONALITY_MAX = 100;
+
+/**
+ * Genera los valores de personalidad de un personaje. A diferencia de los
+ * atributos, no dependen de la raza (el documento no describe afinidades
+ * raciales de personalidad, solo de atributos) — son un punto de partida
+ * puramente individual.
+ */
+export function generatePersonality() {
+  return PERSONALITY_DIMENSIONS.reduce((personality, dimension) => {
+    personality[dimension.id] = randomInt(PERSONALITY_MIN, PERSONALITY_MAX);
+    return personality;
+  }, {});
+}
+
 /**
  * Crea un personaje inicial a partir de una raza y unos datos básicos.
  * Este es un punto de partida deliberadamente simple: rasgos, personalidad,
@@ -56,9 +73,21 @@ export function createCharacter({ name, raceId, sex, birthRegion }) {
     raceId,
     sex,
     birthRegion: birthRegion ?? null,
-    ageYears: race.biology.lifespan.maturityAge ?? 16,
+    ageDays: yearsToDays(race.biology.lifespan.maturityAge ?? 16),
     attributes: generateAttributes(raceId),
+    personality: generatePersonality(),
     traits: [],
     skills: [],
   };
+}
+
+
+const DAYS_PER_YEAR = 365;
+
+export function yearsToDays(years) {
+  return Math.round(years * DAYS_PER_YEAR);
+}
+
+export function daysToYears(days) {
+  return Math.floor(days / DAYS_PER_YEAR);
 }

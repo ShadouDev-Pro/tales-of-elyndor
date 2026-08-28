@@ -93,6 +93,14 @@ section h2 {
   color: #e6e1f5;
 }
 
+.character-form select {
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #4a4468;
+  background: #1e1b2e;
+  color: #e6e1f5;
+}
+
 .character-form button {
   padding: 0.5rem 1.25rem;
   border-radius: 6px;
@@ -113,4 +121,45 @@ section h2 {
 
 .error {
   color: #e08a8a;
+}
+
+.delete-button {
+  padding: 0.3rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid #6b3f3f;
+  background: #2a1818;
+  color: #e6b8b8;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.delete-button:hover {
+  border-color: #c76b6b;
+}
+
+.character-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.advance-time-button {
+  padding: 0.3rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid #4a4468;
+  background: #1e1b2e;
+  color: #e6e1f5;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.advance-time-button:hover {
+  border-color: #8b7fd6;
+}
+
+.character-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid #2a2640;
 }

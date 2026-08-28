@@ -1,30 +1,55 @@
 import { Router } from "express";
-import { randomUUID } from "node:crypto";
 import { createCharacter, PLAYABLE_RACES } from "@toe/shared";
+import { pool } from "../db.js";
 
 export const charactersRouter = Router();
 
-// Almacenamiento en memoria: punto de partida temporal.
-// Cuando se añada persistencia real, este módulo se sustituirá por
-// una capa de base de datos.
-const characters = new Map();
+function rowToCharacter(row) {
+  return {
+    id: row.id,
+    name: row.nombre,
+    raceId: row.raza_id,
+    sex: row.sexo,
+    birthRegion: row.region_nacimiento,
+    ageDays: row.edad_dias,
+    attributes: row.atributos,
+    personality: row.personalidad,
+    traits: row.rasgos,
+    skills: row.habilidades,
+    createdAt: row.creado_en,
+  };
+}
 
 // GET /api/characters
-charactersRouter.get("/", (req, res) => {
-  res.json(Array.from(characters.values()));
+charactersRouter.get("/", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM personajes ORDER BY creado_en DESC"
+    );
+    res.json(result.rows.map(rowToCharacter));
+  } catch (error) {
+    res.status(500).json({ error: "Error al leer los personajes." });
+  }
 });
 
 // GET /api/characters/:id
-charactersRouter.get("/:id", (req, res) => {
-  const character = characters.get(req.params.id);
-  if (!character) {
-    return res.status(404).json({ error: `Personaje "${req.params.id}" no encontrado.` });
+charactersRouter.get("/:id", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM personajes WHERE id = $1",
+      [req.params.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: `Personaje "${req.params.id}" no encontrado.` });
+    }
+    res.json(rowToCharacter(result.rows[0]));
+  } catch (error) {
+    res.status(500).json({ error: "Error al leer el personaje." });
   }
-  res.json(character);
 });
 
 // POST /api/characters  { name, raceId, sex, birthRegion }
-charactersRouter.post("/", (req, res) => {
+charactersRouter.post("/", async (req, res) => {
   const { name, raceId, sex, birthRegion } = req.body ?? {};
 
   if (!name || !raceId) {
@@ -40,11 +65,67 @@ charactersRouter.post("/", (req, res) => {
 
   try {
     const character = createCharacter({ name, raceId, sex, birthRegion });
-    const id = randomUUID();
-    const stored = { id, ...character };
-    characters.set(id, stored);
-    res.status(201).json(stored);
+
+    const result = await pool.query(
+      `INSERT INTO personajes (nombre, raza_id, sexo, region_nacimiento, edad_dias, atributos, personalidad, rasgos, habilidades)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       RETURNING *`,
+      [
+        character.name,
+        character.raceId,
+        character.sex ?? null,
+        character.birthRegion,
+        character.ageDays,
+        JSON.stringify(character.attributes),
+        JSON.stringify(character.personality),
+        JSON.stringify(character.traits),
+        JSON.stringify(character.skills),
+      ]
+    );
+
+    res.status(201).json(rowToCharacter(result.rows[0]));
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+});
+
+// DELETE /api/characters/:id
+charactersRouter.delete("/:id", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "DELETE FROM personajes WHERE id = $1 RETURNING id",
+      [req.params.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: `Personaje "${req.params.id}" no encontrado.` });
+    }
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ error: "Error al eliminar el personaje." });
+  }
+});
+
+// POST /api/characters/:id/advance-time  { days }
+charactersRouter.post("/:id/advance-time", async (req, res) => {
+  const { days } = req.body ?? {};
+
+  if (!Number.isInteger(days) || days <= 0) {
+    return res.status(400).json({ error: "'days' debe ser un entero positivo." });
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE personajes
+       SET edad_dias = edad_dias + $1
+       WHERE id = $2
+       RETURNING *`,
+      [days, req.params.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: `Personaje "${req.params.id}" no encontrado.` });
+    }
+    res.json(rowToCharacter(result.rows[0]));
+  } catch (error) {
+    res.status(500).json({ error: "Error al avanzar el tiempo del personaje." });
   }
 });
