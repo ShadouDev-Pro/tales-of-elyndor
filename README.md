@@ -92,13 +92,3 @@ estructura de código es una interpretación práctica de las secciones de
 razas y atributos, no una traducción literal — algunos valores numéricos
 (años de madurez, esperanza de vida, bonificaciones de afinidad) son
 estimaciones de partida que el propio documento no fija con exactitud.
-
----
-
-Si quieres, puedo:
-
-- Añadir una captura o mock visual en `public/` para mejorar la cabecera.
-- Generar scripts `npm` para facilitar pruebas automáticas.
-- Formatear el `package.json` raíz para añadir badges reales (CI, cobertura).
-
-Indícame cuál de estos siguientes pasos prefieres y lo implemento.
