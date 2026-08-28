@@ -13,6 +13,7 @@ function rowToCharacter(row) {
     birthRegion: row.region_nacimiento,
     ageYears: row.edad_anios,
     attributes: row.atributos,
+    personality: row.personalidad,
     traits: row.rasgos,
     skills: row.habilidades,
     createdAt: row.creado_en,
@@ -66,8 +67,8 @@ charactersRouter.post("/", async (req, res) => {
     const character = createCharacter({ name, raceId, sex, birthRegion });
 
     const result = await pool.query(
-      `INSERT INTO personajes (nombre, raza_id, sexo, region_nacimiento, edad_anios, atributos, rasgos, habilidades)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO personajes (nombre, raza_id, sexo, region_nacimiento, edad_anios, atributos, personalidad, rasgos, habilidades)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
       [
         character.name,
@@ -76,6 +77,7 @@ charactersRouter.post("/", async (req, res) => {
         character.birthRegion,
         character.ageYears,
         JSON.stringify(character.attributes),
+        JSON.stringify(character.personality),
         JSON.stringify(character.traits),
         JSON.stringify(character.skills),
       ]
