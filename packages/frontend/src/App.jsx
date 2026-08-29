@@ -66,6 +66,29 @@ function AttributeGrid({ attributes, characterAttributes }) {
   );
 }
 
+function CharacterHistory({ history }) {
+  if (history.length === 0) {
+    return null;
+  }
+
+  return (
+    <details className="character-history">
+      <summary>Historial de vida ({history.length})</summary>
+      <ul>
+        {history
+          .slice()
+          .reverse()
+          .map((entry, index) => (
+            <li key={index}>
+              <span className="history-age">{Math.floor(entry.ageDays / 365)} años:</span>{" "}
+              {entry.text}
+            </li>
+          ))}
+      </ul>
+    </details>
+  );
+}
+
 function CharacterList({ characters, races, onDelete, onAdvanceTime }) {
   if (characters.length === 0) {
     return <p className="empty-state">Todavía no has creado ningún personaje.</p>;
@@ -95,6 +118,7 @@ function CharacterList({ characters, races, onDelete, onAdvanceTime }) {
                   })}
                 </div>
               )}
+              <CharacterHistory history={char.history} />
             </div>
             <div className="character-actions">
               <button className="advance-time-button" onClick={() => onAdvanceTime(char.id, 365)}>

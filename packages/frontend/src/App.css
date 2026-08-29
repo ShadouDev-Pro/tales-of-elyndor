@@ -192,3 +192,23 @@ section h2 {
   border-color: #6b6b8f;
   color: #c0c0dc;
 }
+
+.character-history {
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.character-history summary {
+  cursor: pointer;
+  color: #a89bd8;
+}
+
+.character-history ul {
+  margin: 0.4rem 0 0;
+  padding-left: 1.2rem;
+}
+
+.history-age {
+  color: #8b7fd6;
+  font-weight: 600;
+}

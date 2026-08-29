@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createCharacter, PLAYABLE_RACES, rollForNewTrait } from "@toe/shared";
+import { createCharacter, PLAYABLE_RACES, rollForNewTrait, rollForEvent } from "@toe/shared";
 import { pool } from "../db.js";
 
 export const charactersRouter = Router();
@@ -16,6 +16,7 @@ function rowToCharacter(row) {
     personality: row.personalidad,
     traits: row.rasgos,
     skills: row.habilidades,
+    history: row.historial,
     createdAt: row.creado_en,
   };
 }
@@ -67,8 +68,8 @@ charactersRouter.post("/", async (req, res) => {
     const character = createCharacter({ name, raceId, sex, birthRegion });
 
     const result = await pool.query(
-      `INSERT INTO personajes (nombre, raza_id, sexo, region_nacimiento, edad_dias, atributos, personalidad, rasgos, habilidades)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `INSERT INTO personajes (nombre, raza_id, sexo, region_nacimiento, edad_dias, atributos, personalidad, rasgos, habilidades, historial)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING *`,
       [
         character.name,
@@ -115,28 +116,41 @@ charactersRouter.post("/:id/advance-time", async (req, res) => {
 
   try {
     const current = await pool.query(
-      "SELECT rasgos FROM personajes WHERE id = $1",
+      "SELECT nombre, edad_dias, rasgos, historial FROM personajes WHERE id = $1",
       [req.params.id]
     );
     if (current.rows.length === 0) {
       return res.status(404).json({ error: `Personaje "${req.params.id}" no encontrado.` });
     }
 
-    const existingTraitIds = current.rows[0].rasgos;
+    const { nombre, edad_dias: currentAgeDays, rasgos: existingTraitIds, historial: existingHistory } =
+      current.rows[0];
+
+    const newAgeDays = currentAgeDays + days;
+
     const newTraitId = rollForNewTrait(days, existingTraitIds);
     const updatedTraitIds = newTraitId
       ? [...existingTraitIds, newTraitId]
       : existingTraitIds;
 
+    const event = rollForEvent(days, nombre);
+    const updatedHistory = event
+      ? [...existingHistory, { ageDays: newAgeDays, text: event.text }]
+      : existingHistory;
+
     const result = await pool.query(
       `UPDATE personajes
-       SET edad_dias = edad_dias + $1, rasgos = $2
-       WHERE id = $3
+       SET edad_dias = $1, rasgos = $2, historial = $3
+       WHERE id = $4
        RETURNING *`,
-      [days, JSON.stringify(updatedTraitIds), req.params.id]
+      [newAgeDays, JSON.stringify(updatedTraitIds), JSON.stringify(updatedHistory), req.params.id]
     );
 
-    res.json({ ...rowToCharacter(result.rows[0]), newTrait: newTraitId });
+    res.json({
+      ...rowToCharacter(result.rows[0]),
+      newTrait: newTraitId,
+      newEvent: event?.text ?? null,
+    });
   } catch (error) {
     res.status(500).json({ error: "Error al avanzar el tiempo del personaje." });
   }
