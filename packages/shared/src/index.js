@@ -14,3 +14,6 @@ export {
     PERSONALITY_DIMENSION_IDS,
     getPersonalityDimensionById,
 } from "./personality.js";
+
+export { TRAITS, getTraitById } from "./traits.js";
+export { rollForNewTrait } from "./traits-engine.js";

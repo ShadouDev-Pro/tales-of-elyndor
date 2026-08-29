@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "./App.css";
+import { TRAITS } from "@toe/shared";
 
 function useApi(path) {
   const [data, setData] = useState(null);
@@ -82,6 +83,18 @@ function CharacterList({ characters, races, onDelete, onAdvanceTime }) {
                 ({races?.find((r) => r.id === char.raceId)?.name ?? char.raceId})
               </span>
               <span className="character-age"> · {ageYears} años</span>
+              {char.traits.length > 0 && (
+                <div className="character-traits">
+                  {char.traits.map((traitId) => {
+                    const trait = TRAITS.find((t) => t.id === traitId);
+                    return (
+                      <span key={traitId} className={`trait-badge trait-${trait?.type ?? "neutral"}`}>
+                        {trait?.name ?? traitId}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
             </div>
             <div className="character-actions">
               <button className="advance-time-button" onClick={() => onAdvanceTime(char.id, 365)}>

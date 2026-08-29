@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createCharacter, PLAYABLE_RACES } from "@toe/shared";
+import { createCharacter, PLAYABLE_RACES, rollForNewTrait } from "@toe/shared";
 import { pool } from "../db.js";
 
 export const charactersRouter = Router();
@@ -114,17 +114,29 @@ charactersRouter.post("/:id/advance-time", async (req, res) => {
   }
 
   try {
-    const result = await pool.query(
-      `UPDATE personajes
-       SET edad_dias = edad_dias + $1
-       WHERE id = $2
-       RETURNING *`,
-      [days, req.params.id]
+    const current = await pool.query(
+      "SELECT rasgos FROM personajes WHERE id = $1",
+      [req.params.id]
     );
-    if (result.rows.length === 0) {
+    if (current.rows.length === 0) {
       return res.status(404).json({ error: `Personaje "${req.params.id}" no encontrado.` });
     }
-    res.json(rowToCharacter(result.rows[0]));
+
+    const existingTraitIds = current.rows[0].rasgos;
+    const newTraitId = rollForNewTrait(days, existingTraitIds);
+    const updatedTraitIds = newTraitId
+      ? [...existingTraitIds, newTraitId]
+      : existingTraitIds;
+
+    const result = await pool.query(
+      `UPDATE personajes
+       SET edad_dias = edad_dias + $1, rasgos = $2
+       WHERE id = $3
+       RETURNING *`,
+      [days, JSON.stringify(updatedTraitIds), req.params.id]
+    );
+
+    res.json({ ...rowToCharacter(result.rows[0]), newTrait: newTraitId });
   } catch (error) {
     res.status(500).json({ error: "Error al avanzar el tiempo del personaje." });
   }

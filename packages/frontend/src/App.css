@@ -163,3 +163,32 @@ section h2 {
   padding: 0.6rem 0;
   border-bottom: 1px solid #2a2640;
 }
+
+.character-traits {
+  margin-top: 0.3rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.trait-badge {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid;
+}
+
+.trait-badge.trait-positivo {
+  border-color: #4f8f5f;
+  color: #a8dcb4;
+}
+
+.trait-badge.trait-negativo {
+  border-color: #8f4f4f;
+  color: #dca8a8;
+}
+
+.trait-badge.trait-neutral {
+  border-color: #6b6b8f;
+  color: #c0c0dc;
+}
