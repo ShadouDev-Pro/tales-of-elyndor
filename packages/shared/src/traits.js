@@ -78,3 +78,30 @@ export const TRAITS = [
 export function getTraitById(id) {
   return TRAITS.find((trait) => trait.id === id);
 }
+
+/**
+ * Aplica el efecto de rasgo de un acontecimiento (ver events.js) sobre un
+ * array de ids de rasgos existentes. A diferencia de la aparición normal
+ * de rasgos, esto puede saltarse un conflicto a propósito (representa un
+ * cambio real vivido por el personaje, no una elección al azar).
+ */
+export function applyTraitEffect(existingTraitIds, effect) {
+  if (!effect) return existingTraitIds;
+
+  let updated = existingTraitIds;
+
+  if (effect.type === "add") {
+    if (effect.removesTraitId) {
+      updated = updated.filter((id) => id !== effect.removesTraitId);
+    }
+    if (!updated.includes(effect.traitId)) {
+      updated = [...updated, effect.traitId];
+    }
+  }
+
+  if (effect.type === "remove") {
+    updated = updated.filter((id) => id !== effect.traitId);
+  }
+
+  return updated;
+}

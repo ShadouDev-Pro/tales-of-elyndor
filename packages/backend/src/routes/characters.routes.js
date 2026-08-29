@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createCharacter, PLAYABLE_RACES, rollForNewTrait, rollForEvent } from "@toe/shared";
+import { createCharacter, PLAYABLE_RACES, rollForNewTrait, rollForEvent, applyTraitEffect } from "@toe/shared";
 import { pool } from "../db.js";
 
 export const charactersRouter = Router();
@@ -128,12 +128,16 @@ charactersRouter.post("/:id/advance-time", async (req, res) => {
 
     const newAgeDays = currentAgeDays + days;
 
+    // 1. Probabilidad normal de rasgo nuevo, ponderada por personalidad.
     const newTraitId = rollForNewTrait(days, existingTraitIds, personality);
-    const updatedTraitIds = newTraitId
-      ? [...existingTraitIds, newTraitId]
-      : existingTraitIds;
+    let updatedTraitIds = newTraitId ? [...existingTraitIds, newTraitId] : existingTraitIds;
 
+    // 2. Acontecimiento, que puede además traer su propio efecto directo sobre rasgos.
     const event = rollForEvent(days, nombre);
+    if (event?.traitEffect) {
+      updatedTraitIds = applyTraitEffect(updatedTraitIds, event.traitEffect);
+    }
+
     const updatedHistory = event
       ? [...existingHistory, { ageDays: newAgeDays, text: event.text }]
       : existingHistory;

@@ -10,6 +10,16 @@
  *
  * `text` puede usar {name} como marcador de sustitución por el nombre del
  * personaje.
+ *
+ * `traitEffect` (opcional) representa un rasgo cambiando por una
+ * experiencia vital concreta (sección 9.7: los rasgos pueden fortalecerse,
+ * debilitarse, desaparecer o evolucionar). A diferencia de la aparición
+ * normal de rasgos (ponderada por personalidad, en traits-engine.js), este
+ * efecto es directo: el acontecimiento en sí mismo es la causa del cambio.
+ * - type: "add" añade `traitId` (quitando antes `removesTraitId`, si el
+ *   personaje lo tenía — representa una superación o un quiebre, no una
+ *   contradicción).
+ * - type: "remove" quita `traitId` si el personaje lo tenía.
  */
 
 export const EVENTS = [
@@ -36,6 +46,21 @@ export const EVENTS = [
   {
     id: "festival_local",
     text: "Un festival local dio a {name} un breve respiro de la rutina.",
+  },
+  {
+    id: "acto_heroico",
+    text: "{name} afrontó un peligro real y salió fortalecido de ello.",
+    traitEffect: { type: "add", traitId: "valiente", removesTraitId: "cobarde" },
+  },
+  {
+    id: "humillacion_publica",
+    text: "{name} vivió una humillación pública que hizo mella en su confianza.",
+    traitEffect: { type: "add", traitId: "cobarde", removesTraitId: "valiente" },
+  },
+  {
+    id: "traicion_cercana",
+    text: "Alguien cercano a {name} le traicionó, dejándole más receloso que antes.",
+    traitEffect: { type: "add", traitId: "desconfiado" },
   },
 ];
 

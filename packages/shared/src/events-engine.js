@@ -7,8 +7,8 @@ const EVENT_CHANCE_PER_YEAR = 0.6;
 
 /**
  * Decide si, tras avanzar `days` días, ocurre un acontecimiento.
- * Devuelve el evento elegido (objeto con id y texto ya resuelto para
- * `characterName`), o null si no ocurre nada esta vez.
+ * Devuelve el evento elegido (id, texto ya resuelto para `characterName`,
+ * y su traitEffect si lo tiene), o null si no ocurre nada esta vez.
  */
 export function rollForEvent(days, characterName) {
   const chance = EVENT_CHANCE_PER_YEAR * (days / 365);
@@ -20,5 +20,6 @@ export function rollForEvent(days, characterName) {
   return {
     id: chosen.id,
     text: chosen.text.replace("{name}", characterName),
+    traitEffect: chosen.traitEffect ?? null,
   };
 }
