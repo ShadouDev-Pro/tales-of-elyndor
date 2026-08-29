@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createCharacter, PLAYABLE_RACES, rollForNewTrait, rollForEvent, applyTraitEffect } from "@toe/shared";
+import { createCharacter, PLAYABLE_RACES, rollForNewTrait, rollForEvent, applyTraitEffect, growAttributes } from "@toe/shared";
 import { pool } from "../db.js";
 
 export const charactersRouter = Router();
@@ -116,15 +116,22 @@ charactersRouter.post("/:id/advance-time", async (req, res) => {
 
   try {
     const current = await pool.query(
-      "SELECT nombre, edad_dias, rasgos, historial, personalidad FROM personajes WHERE id = $1",
+      "SELECT nombre, edad_dias, rasgos, historial, personalidad, atributos, raza_id FROM personajes WHERE id = $1",
       [req.params.id]
     );
     if (current.rows.length === 0) {
       return res.status(404).json({ error: `Personaje "${req.params.id}" no encontrado.` });
     }
 
-    const { nombre, edad_dias: currentAgeDays, rasgos: existingTraitIds, historial: existingHistory, personalidad: personality } =
-      current.rows[0];
+    const {
+      nombre,
+      edad_dias: currentAgeDays,
+      rasgos: existingTraitIds,
+      historial: existingHistory,
+      personalidad: personality,
+      atributos: currentAttributes,
+      raza_id: raceId,
+    } = current.rows[0];
 
     const newAgeDays = currentAgeDays + days;
 
@@ -142,12 +149,21 @@ charactersRouter.post("/:id/advance-time", async (req, res) => {
       ? [...existingHistory, { ageDays: newAgeDays, text: event.text }]
       : existingHistory;
 
+    // 3. Crecimiento pasivo de atributos.
+    const updatedAttributes = growAttributes(days, currentAttributes, raceId);
+
     const result = await pool.query(
       `UPDATE personajes
-       SET edad_dias = $1, rasgos = $2, historial = $3
-       WHERE id = $4
+       SET edad_dias = $1, rasgos = $2, historial = $3, atributos = $4
+       WHERE id = $5
        RETURNING *`,
-      [newAgeDays, JSON.stringify(updatedTraitIds), JSON.stringify(updatedHistory), req.params.id]
+      [
+        newAgeDays,
+        JSON.stringify(updatedTraitIds),
+        JSON.stringify(updatedHistory),
+        JSON.stringify(updatedAttributes),
+        req.params.id,
+      ]
     );
 
     res.json({

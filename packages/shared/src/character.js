@@ -14,8 +14,10 @@ function randomInt(min, max) {
  * Genera el bloque de atributos inicial de un personaje para una raza dada.
  *
  * Cada atributo tiene un valor `actual` (nivel presente) y un `potencial`
- * (hasta dónde podría desarrollarse naturalmente), conforme a la sección
- * 9.3 del documento de diseño. Las afinidades raciales desplazan
+ * (velocidad natural para desarrollar ese atributo con el tiempo — no un
+ * límite: el propio motor de crecimiento, en attributes-engine.js, usa un
+ * techo suave común a todos los personajes, y el potencial solo decide
+ * cuán rápido se acercan a él). Las afinidades raciales desplazan
  * ligeramente el potencial de partida, sin imponer límites absolutos.
  */
 export function generateAttributes(raceId) {

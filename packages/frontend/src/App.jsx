@@ -89,7 +89,28 @@ function CharacterHistory({ history }) {
   );
 }
 
-function CharacterList({ characters, races, onDelete, onAdvanceTime }) {
+function CharacterAttributes({ attributes, attributeDefinitions }) {
+  return (
+    <details className="character-attributes">
+      <summary>Atributos</summary>
+      <div className="attribute-grid-compact">
+        {attributeDefinitions.map((def) => {
+          const values = attributes[def.id];
+          return (
+            <div key={def.id} className="attribute-compact-item">
+              <span>{def.name}</span>
+              <span>
+                {values.actual} <small>/ {values.potencial}</small>
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </details>
+  );
+}
+
+function CharacterList({ characters, races, attributes, onDelete, onAdvanceTime }) {
   if (characters.length === 0) {
     return <p className="empty-state">Todavía no has creado ningún personaje.</p>;
   }
@@ -119,6 +140,7 @@ function CharacterList({ characters, races, onDelete, onAdvanceTime }) {
                 </div>
               )}
               <CharacterHistory history={char.history} />
+              <CharacterAttributes attributes={char.attributes} attributeDefinitions={attributes} />
             </div>
             <div className="character-actions">
               <button className="advance-time-button" onClick={() => onAdvanceTime(char.id, 365)}>
@@ -157,13 +179,13 @@ function App() {
   }, [races, selectedRaceId]);
 
   async function refreshCharacters() {
-  try {
-    const res = await fetch("/api/characters");
-    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-    setCharacters(await res.json());
-  } catch (err) {
-    console.error("No se pudieron cargar los personajes:", err.message);
-  }
+    try {
+      const res = await fetch("/api/characters");
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      setCharacters(await res.json());
+    } catch (err) {
+      console.error("No se pudieron cargar los personajes:", err.message);
+    }
   }
 
   useEffect(() => {
@@ -196,30 +218,30 @@ function App() {
   }
 
   async function handleDeleteCharacter(id) {
-  try {
-    const res = await fetch(`/api/characters/${id}`, { method: "DELETE" });
-    if (!res.ok && res.status !== 204) {
-      throw new Error(`${res.status} ${res.statusText}`);
+    try {
+      const res = await fetch(`/api/characters/${id}`, { method: "DELETE" });
+      if (!res.ok && res.status !== 204) {
+        throw new Error(`${res.status} ${res.statusText}`);
+      }
+      await refreshCharacters();
+    } catch (err) {
+      console.error("No se pudo eliminar el personaje:", err.message);
     }
-    await refreshCharacters();
-  } catch (err) {
-    console.error("No se pudo eliminar el personaje:", err.message);
-  }
   }
 
   async function handleAdvanceTime(id, days) {
-  try {
-    const res = await fetch(`/api/characters/${id}/advance-time`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ days }),
-    });
-    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-    await refreshCharacters();
-  } catch (err) {
-    console.error("No se pudo avanzar el tiempo:", err.message);
+    try {
+      const res = await fetch(`/api/characters/${id}/advance-time`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ days }),
+      });
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      await refreshCharacters();
+    } catch (err) {
+      console.error("No se pudo avanzar el tiempo:", err.message);
+    }
   }
-}
 
   return (
     <div className="app">
@@ -247,10 +269,16 @@ function App() {
           <AttributeGrid attributes={attributes} characterAttributes={character?.attributes} />
         </section>
       )}
-      
+
       <section>
         <h2>Personajes guardados</h2>
-        <CharacterList characters={characters} races={races} onDelete={handleDeleteCharacter} onAdvanceTime={handleAdvanceTime} />
+        <CharacterList
+          characters={characters}
+          races={races}
+          attributes={attributes ?? []}
+          onDelete={handleDeleteCharacter}
+          onAdvanceTime={handleAdvanceTime}
+        />
       </section>
 
       <section>
@@ -262,16 +290,16 @@ function App() {
             value={characterName}
             onChange={(event) => setCharacterName(event.target.value)}
           />
-        <select value={characterSex} onChange={(event) => setCharacterSex(event.target.value)}>
-          <option value="masculino">Masculino</option>
-          <option value="femenino">Femenino</option>
-        </select>
-        <input
-          type="text"
-          placeholder="Región de nacimiento (opcional)"
-          value={birthRegion}
-          onChange={(event) => setBirthRegion(event.target.value)}
-        />
+          <select value={characterSex} onChange={(event) => setCharacterSex(event.target.value)}>
+            <option value="masculino">Masculino</option>
+            <option value="femenino">Femenino</option>
+          </select>
+          <input
+            type="text"
+            placeholder="Región de nacimiento (opcional)"
+            value={birthRegion}
+            onChange={(event) => setBirthRegion(event.target.value)}
+          />
           <button type="submit" disabled={!selectedRaceId}>
             Crear personaje
           </button>

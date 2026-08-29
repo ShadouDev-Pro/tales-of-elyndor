@@ -212,3 +212,28 @@ section h2 {
   color: #8b7fd6;
   font-weight: 600;
 }
+
+.character-attributes {
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.character-attributes summary {
+  cursor: pointer;
+  color: #a89bd8;
+}
+
+.attribute-grid-compact {
+  margin-top: 0.4rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.3rem;
+}
+
+.attribute-compact-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.2rem 0.4rem;
+  background: #1e1b2e;
+  border-radius: 4px;
+}
