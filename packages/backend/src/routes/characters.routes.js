@@ -68,8 +68,8 @@ charactersRouter.post("/", async (req, res) => {
     const character = createCharacter({ name, raceId, sex, birthRegion });
 
     const result = await pool.query(
-      `INSERT INTO personajes (nombre, raza_id, sexo, region_nacimiento, edad_dias, atributos, personalidad, rasgos, habilidades, historial)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      `INSERT INTO personajes (nombre, raza_id, sexo, region_nacimiento, edad_dias, atributos, personalidad, rasgos, habilidades)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
       [
         character.name,
@@ -116,19 +116,19 @@ charactersRouter.post("/:id/advance-time", async (req, res) => {
 
   try {
     const current = await pool.query(
-      "SELECT nombre, edad_dias, rasgos, historial FROM personajes WHERE id = $1",
+      "SELECT nombre, edad_dias, rasgos, historial, personalidad FROM personajes WHERE id = $1",
       [req.params.id]
     );
     if (current.rows.length === 0) {
       return res.status(404).json({ error: `Personaje "${req.params.id}" no encontrado.` });
     }
 
-    const { nombre, edad_dias: currentAgeDays, rasgos: existingTraitIds, historial: existingHistory } =
+    const { nombre, edad_dias: currentAgeDays, rasgos: existingTraitIds, historial: existingHistory, personalidad: personality } =
       current.rows[0];
 
     const newAgeDays = currentAgeDays + days;
 
-    const newTraitId = rollForNewTrait(days, existingTraitIds);
+    const newTraitId = rollForNewTrait(days, existingTraitIds, personality);
     const updatedTraitIds = newTraitId
       ? [...existingTraitIds, newTraitId]
       : existingTraitIds;
