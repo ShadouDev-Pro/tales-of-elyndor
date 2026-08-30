@@ -262,3 +262,8 @@ section h2 {
 .back-link:hover {
   text-decoration: underline;
 }
+
+.attribute-modifier {
+  color: #dca8a8;
+  font-size: 0.85em;
+}

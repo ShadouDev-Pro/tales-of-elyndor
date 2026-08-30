@@ -113,3 +113,59 @@ export function growAttributes(days, attributes, raceId) {
 
   return current;
 }
+
+/**
+ * Aplica el efecto de atributo de un acontecimiento (ver events.js).
+ *
+ * Si es permanente, suma `amount` directamente al `actual` del atributo
+ * (sin bajar de 0). Si es temporal, no toca `actual`: añade un modificador
+ * aparte con una fecha de caducidad (en edad del personaje), que se
+ * resta al mostrar el valor efectivo mientras siga activo.
+ *
+ * Devuelve { attributes, temporaryModifiers } actualizados.
+ */
+export function applyAttributeEffect(attributes, temporaryModifiers, effect, currentAgeDays) {
+  if (!effect) return { attributes, temporaryModifiers };
+
+  if (effect.permanent) {
+    const { actual, potencial } = attributes[effect.attributeId];
+    const updatedAttributes = {
+      ...attributes,
+      [effect.attributeId]: {
+        actual: Math.max(0, actual + effect.amount),
+        potencial,
+      },
+    };
+    return { attributes: updatedAttributes, temporaryModifiers };
+  }
+
+  const newModifier = {
+    attributeId: effect.attributeId,
+    amount: effect.amount,
+    expiresAtAgeDays: currentAgeDays + effect.durationDays,
+  };
+  return {
+    attributes,
+    temporaryModifiers: [...temporaryModifiers, newModifier],
+  };
+}
+
+/**
+ * Elimina los modificadores temporales que ya hayan caducado a la edad
+ * actual del personaje (en días).
+ */
+export function pruneExpiredModifiers(temporaryModifiers, currentAgeDays) {
+  return temporaryModifiers.filter((modifier) => modifier.expiresAtAgeDays > currentAgeDays);
+}
+
+/**
+ * Calcula el valor "efectivo" de un atributo: su `actual` real, más la
+ * suma de los modificadores temporales activos que le afecten. Nunca baja
+ * de 0.
+ */
+export function getEffectiveAttributeValue(attributeId, actual, temporaryModifiers) {
+  const totalModifier = temporaryModifiers
+    .filter((modifier) => modifier.attributeId === attributeId)
+    .reduce((sum, modifier) => sum + modifier.amount, 0);
+  return Math.max(0, actual + totalModifier);
+}

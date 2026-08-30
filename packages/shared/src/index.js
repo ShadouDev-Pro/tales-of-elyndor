@@ -19,4 +19,10 @@ export { TRAITS, getTraitById, applyTraitEffect } from "./traits.js";
 export { rollForNewTrait } from "./traits-engine.js";
 export { EVENTS, getEventById } from "./events.js";
 export { rollForEvent } from "./events-engine.js";
-export { growAttributes } from "./attributes-engine.js";
+
+export {
+  growAttributes,
+  applyAttributeEffect,
+  pruneExpiredModifiers,
+  getEffectiveAttributeValue,
+} from "./attributes-engine.js";

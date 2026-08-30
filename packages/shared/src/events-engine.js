@@ -21,5 +21,6 @@ export function rollForEvent(days, characterName) {
     id: chosen.id,
     text: chosen.text.replace("{name}", characterName),
     traitEffect: chosen.traitEffect ?? null,
+    attributeEffect: chosen.attributeEffect ?? null,
   };
 }

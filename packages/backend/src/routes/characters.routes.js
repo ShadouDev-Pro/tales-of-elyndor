@@ -1,5 +1,16 @@
 import { Router } from "express";
-import { createCharacter, PLAYABLE_RACES, rollForNewTrait, rollForEvent, applyTraitEffect, growAttributes } from "@toe/shared";
+
+import {
+  createCharacter,
+  PLAYABLE_RACES,
+  rollForNewTrait,
+  rollForEvent,
+  applyTraitEffect,
+  growAttributes,
+  applyAttributeEffect,
+  pruneExpiredModifiers,
+} from "@toe/shared";
+
 import { pool } from "../db.js";
 
 export const charactersRouter = Router();
@@ -13,6 +24,7 @@ function rowToCharacter(row) {
     birthRegion: row.region_nacimiento,
     ageDays: row.edad_dias,
     attributes: row.atributos,
+    temporaryModifiers: row.modificadores_temporales,
     personality: row.personalidad,
     traits: row.rasgos,
     skills: row.habilidades,
@@ -106,7 +118,7 @@ charactersRouter.delete("/:id", async (req, res) => {
   }
 });
 
-// POST /api/characters/:id/advance-time  { days }
+/// POST /api/characters/:id/advance-time  { days }
 charactersRouter.post("/:id/advance-time", async (req, res) => {
   const { days } = req.body ?? {};
 
@@ -116,7 +128,7 @@ charactersRouter.post("/:id/advance-time", async (req, res) => {
 
   try {
     const current = await pool.query(
-      "SELECT nombre, edad_dias, rasgos, historial, personalidad, atributos, raza_id FROM personajes WHERE id = $1",
+      "SELECT nombre, edad_dias, rasgos, historial, personalidad, atributos, raza_id, modificadores_temporales FROM personajes WHERE id = $1",
       [req.params.id]
     );
     if (current.rows.length === 0) {
@@ -131,6 +143,7 @@ charactersRouter.post("/:id/advance-time", async (req, res) => {
       personalidad: personality,
       atributos: currentAttributes,
       raza_id: raceId,
+      modificadores_temporales: existingModifiers,
     } = current.rows[0];
 
     const newAgeDays = currentAgeDays + days;
@@ -139,7 +152,7 @@ charactersRouter.post("/:id/advance-time", async (req, res) => {
     const newTraitId = rollForNewTrait(days, existingTraitIds, personality);
     let updatedTraitIds = newTraitId ? [...existingTraitIds, newTraitId] : existingTraitIds;
 
-    // 2. Acontecimiento, que puede además traer su propio efecto directo sobre rasgos.
+    // 2. Acontecimiento, que puede traer efecto sobre rasgos y/o atributos.
     const event = rollForEvent(days, nombre);
     if (event?.traitEffect) {
       updatedTraitIds = applyTraitEffect(updatedTraitIds, event.traitEffect);
@@ -150,18 +163,33 @@ charactersRouter.post("/:id/advance-time", async (req, res) => {
       : existingHistory;
 
     // 3. Crecimiento pasivo de atributos.
-    const updatedAttributes = growAttributes(days, currentAttributes, raceId);
+    let updatedAttributes = growAttributes(days, currentAttributes, raceId);
+
+    // 4. Limpiar modificadores temporales caducados, y aplicar el efecto
+    //    del acontecimiento sobre atributos (permanente o temporal).
+    let updatedModifiers = pruneExpiredModifiers(existingModifiers, newAgeDays);
+    if (event?.attributeEffect) {
+      const result = applyAttributeEffect(
+        updatedAttributes,
+        updatedModifiers,
+        event.attributeEffect,
+        newAgeDays
+      );
+      updatedAttributes = result.attributes;
+      updatedModifiers = result.temporaryModifiers;
+    }
 
     const result = await pool.query(
       `UPDATE personajes
-       SET edad_dias = $1, rasgos = $2, historial = $3, atributos = $4
-       WHERE id = $5
+       SET edad_dias = $1, rasgos = $2, historial = $3, atributos = $4, modificadores_temporales = $5
+       WHERE id = $6
        RETURNING *`,
       [
         newAgeDays,
         JSON.stringify(updatedTraitIds),
         JSON.stringify(updatedHistory),
         JSON.stringify(updatedAttributes),
+        JSON.stringify(updatedModifiers),
         req.params.id,
       ]
     );

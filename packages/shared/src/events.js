@@ -12,14 +12,15 @@
  * personaje.
  *
  * `traitEffect` (opcional) representa un rasgo cambiando por una
- * experiencia vital concreta (sección 9.7: los rasgos pueden fortalecerse,
- * debilitarse, desaparecer o evolucionar). A diferencia de la aparición
- * normal de rasgos (ponderada por personalidad, en traits-engine.js), este
- * efecto es directo: el acontecimiento en sí mismo es la causa del cambio.
- * - type: "add" añade `traitId` (quitando antes `removesTraitId`, si el
- *   personaje lo tenía — representa una superación o un quiebre, no una
- *   contradicción).
- * - type: "remove" quita `traitId` si el personaje lo tenía.
+ * experiencia vital concreta (sección 9.7). Ver traits.js.
+ *
+ * `attributeEffect` (opcional) representa un atributo cambiando de forma
+ * directa por una experiencia vital concreta:
+ * - `permanent: true` → el cambio es definitivo (ej. entrenamiento, que
+ *   suma directamente al `actual` del atributo).
+ * - `permanent: false` → el cambio es temporal (ej. una lesión), y se
+ *   aplica como un modificador aparte con una fecha de caducidad (en
+ *   `durationDays`), sin alterar el `actual` real del atributo.
  */
 
 export const EVENTS = [
@@ -61,6 +62,21 @@ export const EVENTS = [
     id: "traicion_cercana",
     text: "Alguien cercano a {name} le traicionó, dejándole más receloso que antes.",
     traitEffect: { type: "add", traitId: "desconfiado" },
+  },
+  {
+    id: "entrenamiento_intenso",
+    text: "{name} completó un período de entrenamiento físico especialmente intenso.",
+    attributeEffect: { attributeId: "fuerza", amount: 3, permanent: true },
+  },
+  {
+    id: "estudio_profundo",
+    text: "{name} pasó una larga temporada dedicada al estudio profundo.",
+    attributeEffect: { attributeId: "intelecto", amount: 3, permanent: true },
+  },
+  {
+    id: "lesion_grave",
+    text: "{name} sufrió una lesión grave de la que tardará un tiempo en recuperarse.",
+    attributeEffect: { attributeId: "resistencia", amount: -3, permanent: false, durationDays: 730 },
   },
 ];
 

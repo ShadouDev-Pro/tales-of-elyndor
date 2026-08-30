@@ -107,7 +107,11 @@ function PlayPage() {
       {attributeDefinitions && (
         <section>
           <h2>Atributos</h2>
-          <AttributeGrid attributes={attributeDefinitions} characterAttributes={character.attributes} />
+          <AttributeGrid
+            attributes={attributeDefinitions}
+            characterAttributes={character.attributes}
+            temporaryModifiers={character.temporaryModifiers}
+          />
         </section>
       )}
 
