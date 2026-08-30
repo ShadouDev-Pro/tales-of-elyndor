@@ -1,18 +1,53 @@
 :root {
-  color-scheme: dark;
-  font: 16px/1.5 system-ui, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light;
+
+  /* Paleta — taberna a la luz de las velas */
+  --color-parchment: #ede0c8;
+  --color-parchment-dark: #e2d3b0;
+  --color-ink: #2b1b12;
+  --color-wood: #4a2e1d;
+  --color-wood-dark: #35200f;
+  --color-amber: #b8862e;
+  --color-amber-light: #d9a94a;
+  --color-herb: #3f5b3a;
+  --color-wine: #7a2e2e;
+
+  --font-display: "Cinzel", "Times New Roman", serif;
+  --font-body: "Spectral", Georgia, serif;
+
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
 }
 
 body {
   margin: 0;
-  background: #0f0d18;
-  color: #e6e1f5;
+  background-image: url('/backgrounds/tavern-bg.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  color: var(--color-ink);
 }
 
 h1, h2, h3, h4 {
-  color: #f2eefb;
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
 }
 
-button {
-  font: inherit;
+header h1 {
+  color: #f4e6c8;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.6);
+}
+
+header .tagline {
+  color: #e6d0a5;
+}
+
+button, input, select {
+  font-family: var(--font-body);
 }

@@ -1,3 +1,5 @@
+import RaceIcon from "./RaceIcon.jsx";
+
 function RaceList({ races, selectedRaceId, onSelect }) {
   return (
     <ul className="race-list">
@@ -7,7 +9,8 @@ function RaceList({ races, selectedRaceId, onSelect }) {
             className={race.id === selectedRaceId ? "race-button selected" : "race-button"}
             onClick={() => onSelect(race.id)}
           >
-            {race.name}
+            <RaceIcon raceId={race.id} className="race-icon" />
+            <span>{race.name}</span>
           </button>
         </li>
       ))}

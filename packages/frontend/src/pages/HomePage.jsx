@@ -4,23 +4,26 @@ import { useApi } from "../hooks/useApi.js";
 import RaceList from "../components/RaceList.jsx";
 import AttributeGrid from "../components/AttributeGrid.jsx";
 
-function SavedCharacterRow({ character, raceName, onDelete }) {
+function CharacterCard({ character, raceName, onDelete }) {
   const ageYears = Math.floor(character.ageDays / 365);
 
   return (
-    <li className="character-list-item">
-      <div>
-        <strong>{character.name}</strong>{" "}
-        <span className="character-race">({raceName})</span>
-        <span className="character-age"> · {ageYears} años</span>
+    <li className="character-card">
+      <div className="character-card-header">
+        <strong>{character.name}</strong>
       </div>
-      <div className="character-actions">
-        <Link className="play-button" to={`/jugar/${character.id}`}>
-          Jugar
-        </Link>
-        <button className="delete-button" onClick={() => onDelete(character.id)}>
-          Eliminar
-        </button>
+      <div className="character-card-body">
+        <p className="character-card-meta">
+          {raceName} · {ageYears} años
+        </p>
+        <div className="character-card-actions">
+          <Link className="play-button" to={`/jugar/${character.id}`}>
+            Jugar
+          </Link>
+          <button className="delete-button" onClick={() => onDelete(character.id)}>
+            Eliminar
+          </button>
+        </div>
       </div>
     </li>
   );
@@ -95,83 +98,103 @@ function HomePage() {
     }
   }
 
-  return (
-    <div className="app">
-      <header>
-        <h1>Tales of Elyndor</h1>
-        <p className="tagline">El personaje no elige lo que es. Se convierte en ello.</p>
-      </header>
+    return (
+      <div className="app">
+        <div className="board-frame">
+          <div className="board-content">
+            {(racesError || attributesError) && (
+              <p className="error">
+                No se pudo conectar con el backend. ¿Está corriendo en el puerto
+                3001?
+              </p>
+            )}
 
-      {(racesError || attributesError) && (
-        <p className="error">
-          No se pudo conectar con el backend. ¿Está corriendo en el puerto 3001?
-        </p>
-      )}
+            {races && (
+              <section className="notice notice-tilt-a">
+                <h2>Elige una raza</h2>
+                <RaceList
+                  races={races}
+                  selectedRaceId={selectedRaceId}
+                  onSelect={setSelectedRaceId}
+                />
+              </section>
+            )}
 
-      {races && (
-        <section>
-          <h2>Elige una raza</h2>
-          <RaceList races={races} selectedRaceId={selectedRaceId} onSelect={setSelectedRaceId} />
-        </section>
-      )}
+            {attributes && (
+              <section className="notice notice-tilt-b">
+                <h2>Atributos fundamentales</h2>
+                <AttributeGrid
+                  attributes={attributes}
+                  characterAttributes={character?.attributes}
+                />
+              </section>
+            )}
 
-      {attributes && (
-        <section>
-          <h2>Atributos fundamentales</h2>
-          <AttributeGrid attributes={attributes} characterAttributes={character?.attributes} />
-        </section>
-      )}
+            <section className="notice notice-tilt-c">
+              <h2>Personajes guardados</h2>
+              {characters.length === 0 ? (
+                <p className="empty-state">
+                  Todavía no has creado ningún personaje.
+                </p>
+              ) : (
+                <ul className="character-list">
+                  {characters.map((char) => (
+                    <CharacterCard
+                      key={char.id}
+                      character={char}
+                      raceName={
+                        races?.find((r) => r.id === char.raceId)?.name ??
+                        char.raceId
+                      }
+                      onDelete={handleDeleteCharacter}
+                    />
+                  ))}
+                </ul>
+              )}
+            </section>
 
-      <section>
-        <h2>Personajes guardados</h2>
-        {characters.length === 0 ? (
-          <p className="empty-state">Todavía no has creado ningún personaje.</p>
-        ) : (
-          <ul className="character-list">
-            {characters.map((char) => (
-              <SavedCharacterRow
-                key={char.id}
-                character={char}
-                raceName={races?.find((r) => r.id === char.raceId)?.name ?? char.raceId}
-                onDelete={handleDeleteCharacter}
-              />
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section>
-        <h2>Generar personaje</h2>
-        <form onSubmit={handleCreateCharacter} className="character-form">
-          <input
-            type="text"
-            placeholder="Nombre del personaje"
-            value={characterName}
-            onChange={(event) => setCharacterName(event.target.value)}
-          />
-          <select value={characterSex} onChange={(event) => setCharacterSex(event.target.value)}>
-            <option value="masculino">Masculino</option>
-            <option value="femenino">Femenino</option>
-          </select>
-          <input
-            type="text"
-            placeholder="Región de nacimiento (opcional)"
-            value={birthRegion}
-            onChange={(event) => setBirthRegion(event.target.value)}
-          />
-          <button type="submit" disabled={!selectedRaceId}>
-            Crear personaje
-          </button>
-        </form>
-        {creationError && <p className="error">{creationError}</p>}
-        {character && (
-          <p className="character-summary">
-            <strong>{character.name}</strong> ({races?.find((r) => r.id === character.raceId)?.name})
-          </p>
-        )}
-      </section>
-    </div>
-  );
+            <section className="notice notice-flat">
+              <h2>Generar personaje</h2>
+              <form onSubmit={handleCreateCharacter} className="character-form">
+                <input
+                  type="text"
+                  placeholder="Nombre del personaje"
+                  value={characterName}
+                  onChange={(event) => setCharacterName(event.target.value)}
+                />
+                <select
+                  value={characterSex}
+                  onChange={(event) => setCharacterSex(event.target.value)}
+                >
+                  <option value="masculino">Masculino</option>
+                  <option value="femenino">Femenino</option>
+                </select>
+                <input
+                  type="text"
+                  placeholder="Región de nacimiento (opcional)"
+                  value={birthRegion}
+                  onChange={(event) => setBirthRegion(event.target.value)}
+                />
+                <button
+                  type="submit"
+                  className="seal-button"
+                  disabled={!selectedRaceId}
+                >
+                  Crear personaje
+                </button>
+              </form>
+              {creationError && <p className="error">{creationError}</p>}
+              {character && (
+                <p className="character-summary">
+                  <strong>{character.name}</strong> (
+                  {races?.find((r) => r.id === character.raceId)?.name})
+                </p>
+              )}
+            </section>
+          </div>
+        </div>
+      </div>
+    );
 }
 
 export default HomePage;
