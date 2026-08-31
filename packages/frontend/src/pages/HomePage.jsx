@@ -98,103 +98,121 @@ function HomePage() {
     }
   }
 
-    return (
-      <div className="app">
-        <div className="board-frame">
-          <div className="board-content">
-            {(racesError || attributesError) && (
-              <p className="error">
-                No se pudo conectar con el backend. ¿Está corriendo en el puerto
-                3001?
-              </p>
-            )}
-
-            {races && (
-              <section className="notice notice-tilt-a">
-                <h2>Elige una raza</h2>
-                <RaceList
-                  races={races}
-                  selectedRaceId={selectedRaceId}
-                  onSelect={setSelectedRaceId}
-                />
-              </section>
-            )}
-
-            {attributes && (
-              <section className="notice notice-tilt-b">
-                <h2>Atributos fundamentales</h2>
-                <AttributeGrid
-                  attributes={attributes}
-                  characterAttributes={character?.attributes}
-                />
-              </section>
-            )}
-
-            <section className="notice notice-tilt-c">
-              <h2>Personajes guardados</h2>
-              {characters.length === 0 ? (
-                <p className="empty-state">
-                  Todavía no has creado ningún personaje.
+      return (
+        <div className="app">
+          <div className="board-frame">
+            <div className="board-content">
+              {(racesError || attributesError) && (
+                <p className="error">
+                  No se pudo conectar con el backend. ¿Está corriendo en el
+                  puerto 3001?
                 </p>
-              ) : (
-                <ul className="character-list">
-                  {characters.map((char) => (
-                    <CharacterCard
-                      key={char.id}
-                      character={char}
-                      raceName={
-                        races?.find((r) => r.id === char.raceId)?.name ??
-                        char.raceId
-                      }
-                      onDelete={handleDeleteCharacter}
+              )}
+
+              <div className="board-top-row">
+                {races && (
+                  <section className="notice">
+                    <h2>Elige una raza</h2>
+                    <RaceList
+                      races={races}
+                      selectedRaceId={selectedRaceId}
+                      onSelect={setSelectedRaceId}
                     />
-                  ))}
-                </ul>
-              )}
-            </section>
+                  </section>
+                )}
 
-            <section className="notice notice-flat">
-              <h2>Generar personaje</h2>
-              <form onSubmit={handleCreateCharacter} className="character-form">
-                <input
-                  type="text"
-                  placeholder="Nombre del personaje"
-                  value={characterName}
-                  onChange={(event) => setCharacterName(event.target.value)}
-                />
-                <select
-                  value={characterSex}
-                  onChange={(event) => setCharacterSex(event.target.value)}
-                >
-                  <option value="masculino">Masculino</option>
-                  <option value="femenino">Femenino</option>
-                </select>
-                <input
-                  type="text"
-                  placeholder="Región de nacimiento (opcional)"
-                  value={birthRegion}
-                  onChange={(event) => setBirthRegion(event.target.value)}
-                />
-                <button
-                  type="submit"
-                  className="seal-button"
-                  disabled={!selectedRaceId}
-                >
-                  Crear personaje
-                </button>
-              </form>
-              {creationError && <p className="error">{creationError}</p>}
-              {character && (
-                <p className="character-summary">
-                  <strong>{character.name}</strong> (
-                  {races?.find((r) => r.id === character.raceId)?.name})
-                </p>
-              )}
-            </section>
+                {attributes && (
+                  <section className="notice">
+                    <h2>Atributos fundamentales</h2>
+                    <AttributeGrid
+                      attributes={attributes}
+                      characterAttributes={character?.attributes}
+                      compact
+                    />
+                  </section>
+                )}
+
+                <section className="notice">
+                  <h2>Generar personaje</h2>
+                  <form
+                    onSubmit={handleCreateCharacter}
+                    className="character-form"
+                  >
+                    <div className="character-form-fields">
+                      <input
+                        type="text"
+                        placeholder="Nombre del personaje"
+                        value={characterName}
+                        onChange={(event) =>
+                          setCharacterName(event.target.value)
+                        }
+                      />
+                      <select
+                        value={characterSex}
+                        onChange={(event) =>
+                          setCharacterSex(event.target.value)
+                        }
+                      >
+                        <option value="masculino">Masculino</option>
+                        <option value="femenino">Femenino</option>
+                      </select>
+                      <input
+                        type="text"
+                        placeholder="Región de nacimiento (opcional)"
+                        value={birthRegion}
+                        onChange={(event) => setBirthRegion(event.target.value)}
+                      />
+                    </div>
+                    <div className="seal-cta">
+                      <button
+                        type="submit"
+                        className="seal-button-img"
+                        disabled={!selectedRaceId}
+                        aria-label="Crear personaje"
+                      >
+                        <img src="/icons/wax-seal.png" alt="" />
+                      </button>
+                      <span className="seal-caption">
+                        ¡Comienza tu aventura!
+                      </span>
+                    </div>
+                  </form>
+                  {creationError && <p className="error">{creationError}</p>}
+                  {character && (
+                    <p className="character-summary">
+                      <strong>{character.name}</strong> (
+                      {races?.find((r) => r.id === character.raceId)?.name})
+                    </p>
+                  )}
+                </section>
+              </div>
+
+              <section className="notice character-list-section">
+                <h2>Personajes guardados</h2>
+                {characters.length === 0 ? (
+                  <p className="empty-state">
+                    Todavía no has creado ningún personaje.
+                  </p>
+                ) : (
+                  <ul className="character-list">
+                    {characters.map((char) => (
+                      <CharacterCard
+                        key={char.id}
+                        character={char}
+                        raceName={
+                          races?.find((r) => r.id === char.raceId)?.name ??
+                          char.raceId
+                        }
+                        onDelete={handleDeleteCharacter}
+                      />
+                    ))}
+                  </ul>
+                )}
+              </section>
+            </div>
           </div>
         </div>
-      </div>
-    );
+      );
 }
 
 export default HomePage;

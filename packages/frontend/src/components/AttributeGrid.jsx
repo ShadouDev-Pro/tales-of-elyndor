@@ -1,6 +1,34 @@
 import { getEffectiveAttributeValue } from "@toe/shared";
+import AttributeIcon from "./AttributeIcon.jsx";
 
-function AttributeGrid({ attributes, characterAttributes, temporaryModifiers = [] }) {
+const SOFT_CAP = 100;
+
+function AttributeGrid({ attributes, characterAttributes, temporaryModifiers = [], compact = false }) {
+  if (compact) {
+    return (
+      <div className="attribute-list-compact">
+        {attributes.map((attribute) => {
+          const values = characterAttributes?.[attribute.id];
+          const effectiveValue = values
+            ? getEffectiveAttributeValue(attribute.id, values.actual, temporaryModifiers)
+            : 0;
+          const barWidth = Math.min(100, (effectiveValue / SOFT_CAP) * 100);
+
+          return (
+            <div className="attribute-row-compact" key={attribute.id}>
+              <AttributeIcon attributeId={attribute.id} className="attribute-icon-compact" />
+              <span className="attribute-name-compact">{attribute.name}</span>
+              <div className="attribute-bar-track">
+                <div className="attribute-bar-fill" style={{ width: `${barWidth}%` }} />
+              </div>
+              <span className="attribute-value-compact">{effectiveValue}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <div className="attribute-grid">
       {attributes.map((attribute) => {
