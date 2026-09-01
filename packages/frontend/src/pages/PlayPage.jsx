@@ -4,6 +4,8 @@ import { TRAITS } from "@toe/shared";
 import { useApi } from "../hooks/useApi.js";
 import AttributeGrid from "../components/AttributeGrid.jsx";
 import CharacterHistory from "../components/CharacterHistory.jsx";
+import RaceIcon from "../components/RaceIcon.jsx";
+import TabNavBar from "../components/TabNavBar.jsx";
 
 function PlayPage() {
   const { id } = useParams();
@@ -12,6 +14,7 @@ function PlayPage() {
 
   const [character, setCharacter] = useState(null);
   const [error, setError] = useState(null);
+  const [activeTabId, setActiveTabId] = useState("personaje");
 
   async function refreshCharacter() {
     try {
@@ -44,8 +47,12 @@ function PlayPage() {
   if (error) {
     return (
       <div className="app">
-        <p className="error">No se pudo cargar el personaje: {error}</p>
-        <Link to="/">← Volver</Link>
+        <div className="board-frame">
+          <div className="board-content">
+            <p className="error">No se pudo cargar el personaje: {error}</p>
+            <Link to="/" className="back-link">← Volver</Link>
+          </div>
+        </div>
       </div>
     );
   }
@@ -53,7 +60,11 @@ function PlayPage() {
   if (!character) {
     return (
       <div className="app">
-        <p>Cargando personaje...</p>
+        <div className="board-frame">
+          <div className="board-content">
+            <p>Cargando personaje...</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -61,34 +72,28 @@ function PlayPage() {
   const raceName = races?.find((r) => r.id === character.raceId)?.name ?? character.raceId;
   const ageYears = Math.floor(character.ageDays / 365);
 
-  return (
-    <div className="app">
-      <Link to="/" className="back-link">
-        ← Volver
-      </Link>
-
-      <header>
-        <h1>{character.name}</h1>
-        <p className="tagline">
-          {raceName} · {ageYears} años
-        </p>
-      </header>
-
-      <section>
-        <h2>Avanzar tiempo</h2>
-        <div className="character-actions">
-          <button className="advance-time-button" onClick={() => handleAdvanceTime(365)}>
-            +1 año
-          </button>
-          <button className="advance-time-button" onClick={() => handleAdvanceTime(30)}>
-            +1 mes
-          </button>
+  const tabs = [
+    {
+      id: "personaje",
+      label: "Personaje",
+      content: (
+        <div className="character-identity">
+          <RaceIcon raceId={character.raceId} className="identity-icon" />
+          <div>
+            <h3>{character.name}</h3>
+            <p className="character-identity-meta">
+              {raceName} · {character.sex} · {ageYears} años
+              {character.birthRegion && <> · {character.birthRegion}</>}
+            </p>
+          </div>
         </div>
-      </section>
-
-      <section>
-        <h2>Rasgos</h2>
-        {character.traits.length === 0 ? (
+      ),
+    },
+    {
+      id: "rasgos",
+      label: "Rasgos",
+      content:
+        character.traits.length === 0 ? (
           <p className="empty-state">Todavía no ha desarrollado ningún rasgo.</p>
         ) : (
           <div className="character-traits">
@@ -101,28 +106,88 @@ function PlayPage() {
               );
             })}
           </div>
-        )}
-      </section>
-
-      {attributeDefinitions && (
-        <section>
-          <h2>Atributos</h2>
-          <AttributeGrid
-            attributes={attributeDefinitions}
-            characterAttributes={character.attributes}
-            temporaryModifiers={character.temporaryModifiers}
-          />
-        </section>
-      )}
-
-      <section>
-        <h2>Historial de vida</h2>
-        {character.history.length === 0 ? (
+        ),
+    },
+    {
+      id: "diario",
+      label: "Diario",
+      content:
+        character.history.length === 0 ? (
           <p className="empty-state">Todavía no ha ocurrido nada en su vida.</p>
         ) : (
           <CharacterHistory history={character.history} />
-        )}
-      </section>
+        ),
+    },
+    {
+      id: "inventario",
+      label: "Inventario",
+      content: <p className="empty-state">Próximamente.</p>,
+    },
+    {
+      id: "misiones",
+      label: "Misiones",
+      content: <p className="empty-state">Próximamente.</p>,
+    },
+    {
+      id: "mapa",
+      label: "Mapa",
+      content: <p className="empty-state">Próximamente.</p>,
+    },
+  ];
+
+  return (
+    <div className="app">
+      <div className="board-frame">
+        <div className="board-content play-content">
+          <div className="play-top-row">
+            <section className="notice play-column">
+              <h2>Atributos</h2>
+              {attributeDefinitions && (
+                <AttributeGrid
+                  attributes={attributeDefinitions}
+                  characterAttributes={character.attributes}
+                  temporaryModifiers={character.temporaryModifiers}
+                  compact
+                />
+              )}
+            </section>
+
+            <section className="notice play-column placeholder-notice">
+              <h2>Decisiones</h2>
+              <p className="empty-state">Próximamente.</p>
+            </section>
+          </div>
+
+          <section className="notice play-tabs-section">
+            {tabs.find((tab) => tab.id === activeTabId)?.content}
+          </section>
+        </div>
+      </div>
+
+      <TabNavBar
+        tabs={tabs}
+        activeId={activeTabId}
+        onSelect={setActiveTabId}
+        extraActions={
+          <>
+            <button
+              className="time-button"
+              onClick={() => handleAdvanceTime(365)}
+            >
+              +1 año
+            </button>
+            <button
+              className="time-button"
+              onClick={() => handleAdvanceTime(30)}
+            >
+              +1 mes
+            </button>
+          </>
+        }
+      />
+      <Link to="/" className="back-link-floating">
+        ← Volver
+      </Link>
     </div>
   );
 }

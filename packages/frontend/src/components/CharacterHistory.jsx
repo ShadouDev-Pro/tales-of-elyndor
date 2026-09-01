@@ -4,8 +4,7 @@ function CharacterHistory({ history }) {
   }
 
   return (
-    <details className="character-history">
-      <summary>Historial de vida ({history.length})</summary>
+    <div className="character-history">
       <ul>
         {history
           .slice()
@@ -17,7 +16,7 @@ function CharacterHistory({ history }) {
             </li>
           ))}
       </ul>
-    </details>
+    </div>
   );
 }
 

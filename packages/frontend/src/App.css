@@ -19,6 +19,10 @@ body {
   padding: 0 1rem;
 }
 
+.board-content.play-content {
+  overflow: hidden;
+}
+
 /* Scrollbar discreta, a juego con la madera */
 .board-content::-webkit-scrollbar {
   width: 10px;
@@ -367,14 +371,20 @@ section.notice h2 {
 }
 
 .character-history {
-  margin-top: 0.4rem;
+  max-height: 320px;
+  overflow-y: auto;
   font-size: 0.85rem;
 }
 
-.character-history summary {
-  cursor: pointer;
-  color: var(--color-wood);
-  font-weight: 600;
+.character-history::-webkit-scrollbar {
+  width: 8px;
+}
+.character-history::-webkit-scrollbar-track {
+  background: rgba(74, 46, 29, 0.1);
+}
+.character-history::-webkit-scrollbar-thumb {
+  background: var(--color-wood);
+  border-radius: 4px;
 }
 
 .character-history ul {
@@ -465,4 +475,206 @@ section.notice h2 {
 
 .character-summary {
   margin-top: 1rem;
+}
+
+/* --- PlayPage --- */
+.play-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.play-top-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  align-items: stretch;
+}
+
+.play-tabs-section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tabbed-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.tabbed-panel-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 2px solid var(--color-wood);
+}
+
+.tab-button {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.6rem 0.4rem;
+  border-radius: 4px;
+  border: 1px solid var(--color-wood);
+  background: var(--color-parchment-dark);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.tab-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.tab-button span {
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.tab-button:hover {
+  border-color: var(--color-amber);
+}
+
+.tab-button.selected {
+  background: var(--color-amber);
+  border-color: var(--color-wood-dark);
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+.tabbed-panel-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.play-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.placeholder-notice {
+  opacity: 0.7;
+}
+
+.character-identity {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.identity-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--color-wood);
+  flex-shrink: 0;
+}
+
+.character-identity h2 {
+  margin: 0;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.character-identity-meta {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+  color: var(--color-wood);
+  text-transform: capitalize;
+}
+
+.modifier-list {
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 0.9rem;
+}
+
+.tab-navbar-divider {
+  width: 1px;
+  background: rgba(216, 168, 74, 0.4);
+  margin: 0 0.3rem;
+}
+
+.tab-navbar-extra {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.time-button {
+  padding: 0.5rem 0.9rem;
+  border-radius: 6px;
+  border: 1px solid var(--color-wine);
+  background: rgba(122, 46, 46, 0.25);
+  color: #f2c9c9;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  align-self: center;
+}
+
+.time-button:hover {
+  background: var(--color-wine);
+  color: #f2e6d8;
+}
+
+.back-link-floating {
+  position: fixed;
+  top: 1.25rem;
+  left: 1.25rem;
+  background: rgba(20, 16, 10, 0.85);
+  color: var(--color-amber-light);
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-amber);
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  z-index: 10;
+}
+
+.back-link-floating:hover {
+  text-decoration: underline;
+}
+
+.tab-navbar-floating {
+  position: fixed;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 66vw;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(20, 16, 10, 0.92);
+  padding: 0.4rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid var(--color-amber);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  z-index: 10;
+}
+
+.tab-navbar-floating .tab-button {
+  flex: 1;
+  min-width: 0;
+  padding: 0.35rem 0.4rem;
+}
+
+.tab-navbar-floating .tab-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.tab-navbar-floating .tab-button span {
+  font-size: 0.68rem;
 }
