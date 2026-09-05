@@ -26,3 +26,5 @@ export {
   pruneExpiredModifiers,
   getEffectiveAttributeValue,
 } from "./attributes-engine.js";
+
+export { attributeToModifier, rollCheck } from "./rolls.js";

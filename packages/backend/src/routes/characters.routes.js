@@ -9,6 +9,8 @@ import {
   growAttributes,
   applyAttributeEffect,
   pruneExpiredModifiers,
+  rollCheck,
+  getEffectiveAttributeValue,
 } from "@toe/shared";
 
 import { pool } from "../db.js";
@@ -201,5 +203,42 @@ charactersRouter.post("/:id/advance-time", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: "Error al avanzar el tiempo del personaje." });
+  }
+});
+
+// POST /api/characters/:id/check  { attributeId, difficulty, extraModifiers? }
+charactersRouter.post("/:id/check", async (req, res) => {
+  const { attributeId, difficulty, extraModifiers } = req.body ?? {};
+
+  if (!attributeId || !Number.isInteger(difficulty)) {
+    return res.status(400).json({ error: "Se requieren 'attributeId' y 'difficulty' (entero)." });
+  }
+
+  try {
+    const current = await pool.query(
+      "SELECT atributos, modificadores_temporales FROM personajes WHERE id = $1",
+      [req.params.id]
+    );
+    if (current.rows.length === 0) {
+      return res.status(404).json({ error: `Personaje "${req.params.id}" no encontrado.` });
+    }
+
+    const { atributos: attributes, modificadores_temporales: temporaryModifiers } = current.rows[0];
+    const attribute = attributes[attributeId];
+    if (!attribute) {
+      return res.status(400).json({ error: `Atributo "${attributeId}" no válido.` });
+    }
+
+    const effectiveValue = getEffectiveAttributeValue(attributeId, attribute.actual, temporaryModifiers);
+
+    const result = rollCheck({
+      attributeValue: effectiveValue,
+      difficulty,
+      extraModifiers: Number.isInteger(extraModifiers) ? extraModifiers : 0,
+    });
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: "Error al resolver la tirada." });
   }
 });
