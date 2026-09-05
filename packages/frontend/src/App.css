@@ -17,6 +17,8 @@ body {
   height: 68vh;
   overflow-y: auto;
   padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .board-content.play-content {
@@ -54,7 +56,7 @@ header h1 {
 .board-top-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1.25rem;
+  gap: 1rem;
 }
 
 .board-top-row section.notice {
@@ -62,13 +64,16 @@ header h1 {
 }
 
 section.notice.character-list-section {
-  margin-top: 1.5rem !important;
+  flex: 1 0 auto;
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
 }
 
 section.notice {
   position: relative;
   margin-top: 0;
-  padding: 1.5rem 1.75rem;
+  padding: 0.75rem 1.1rem;
   background-color: var(--color-parchment);
   background-image:
     radial-gradient(ellipse at center, transparent 55%, rgba(58, 40, 16, 0.35) 100%),
@@ -82,8 +87,8 @@ section.notice {
 
 section.notice h2 {
   border-bottom: 2px solid var(--color-wood);
-  padding-bottom: 0.5rem;
-  font-size: 1.3rem;
+  padding-bottom: 0.3rem;
+  font-size: 1.1rem;
 }
 
 /* --- Sello de lacre: elemento de firma para acciones principales --- */
@@ -150,7 +155,7 @@ section.notice h2 {
   flex-direction: column;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.7rem 0.4rem;
+  padding: 0.5rem 0.3rem;
   border-radius: 4px;
   border: 1px solid var(--color-wood);
   background: var(--color-parchment-dark);
@@ -161,8 +166,8 @@ section.notice h2 {
 }
 
 .race-icon {
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
 }
 
 .race-button span {
@@ -303,41 +308,67 @@ section.notice h2 {
 .character-list {
   list-style: none;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  margin: 0;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  flex-wrap: nowrap;
   gap: 1rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 0.5rem;
+}
+
+.character-list::-webkit-scrollbar {
+  height: 8px;
+}
+.character-list::-webkit-scrollbar-track {
+  background: rgba(74, 46, 29, 0.1);
+}
+.character-list::-webkit-scrollbar-thumb {
+  background: var(--color-wood);
+  border-radius: 4px;
 }
 
 .character-card {
-  border-radius: 4px;
+  border-radius: 6px;
   overflow: hidden;
   border: 1px solid var(--color-wood-dark);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.35);
+  flex: 0 0 240px;
 }
 
 .character-card-header {
   background: var(--color-wood);
   color: #f2e6d8;
-  padding: 0.5rem 0.75rem;
+  padding: 0.6rem 0.9rem;
   font-family: var(--font-display);
-  font-size: 0.95rem;
+  font-size: 1.15rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.character-card-icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
 }
 
 .character-card-body {
   background: var(--color-parchment-dark);
-  padding: 0.6rem 0.75rem;
+  padding: 0.75rem 0.9rem;
 }
 
 .character-card-meta {
-  margin: 0 0 0.6rem;
-  font-size: 0.85rem;
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
   color: var(--color-wood);
 }
 
 .character-card-actions {
   display: flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
+  gap: 0.6rem;
 }
 
 .character-traits {
@@ -677,4 +708,28 @@ section.notice h2 {
 
 .tab-navbar-floating .tab-button span {
   font-size: 0.68rem;
+}
+
+section.notice.character-list-section {
+  margin-top: 0.5rem !important;
+  padding: 0.6rem 1.1rem !important;
+}
+
+section.notice.character-list-section h2 {
+  padding-bottom: 0.2rem;
+  margin: 0 0 0.4rem;
+  font-size: 1rem;
+}
+
+.character-card-actions .play-button,
+.character-card-actions .delete-button {
+  flex: 1;
+  text-align: center;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.85rem;
+}
+
+section.notice.character-list-section {
+  flex: 1 0 auto;
+  margin-bottom: 1.5rem;
 }

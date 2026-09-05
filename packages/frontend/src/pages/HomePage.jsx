@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useApi } from "../hooks/useApi.js";
 import RaceList from "../components/RaceList.jsx";
 import AttributeGrid from "../components/AttributeGrid.jsx";
+import RaceIcon from "../components/RaceIcon.jsx";
 
 function CharacterCard({ character, raceName, onDelete }) {
   const ageYears = Math.floor(character.ageDays / 365);
@@ -10,6 +11,7 @@ function CharacterCard({ character, raceName, onDelete }) {
   return (
     <li className="character-card">
       <div className="character-card-header">
+        <RaceIcon raceId={character.raceId} className="character-card-icon" />
         <strong>{character.name}</strong>
       </div>
       <div className="character-card-body">
