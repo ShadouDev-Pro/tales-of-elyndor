@@ -30,3 +30,4 @@ export {
 export { attributeToModifier, rollCheck } from "./rolls.js";
 export { SKILLS, getSkillById, getLeafSkills, getSkillPath } from "./skills.js";
 export { practiceSkill, isValidLeafSkill } from "./skills-engine.js";
+export { checkDeathByOldAge, DEATH_CAUSE_OLD_AGE } from "./mortality.js";

@@ -72,6 +72,34 @@ function PlayPage() {
   const raceName = races?.find((r) => r.id === character.raceId)?.name ?? character.raceId;
   const ageYears = Math.floor(character.ageDays / 365);
 
+  if (!character.alive) {
+    return (
+      <div className="app">
+        <div className="board-frame">
+          <div className="board-content play-content">
+            <section className="notice death-notice">
+              <h2>{character.name} ha fallecido</h2>
+              <p>{character.causeOfDeath}</p>
+              <p className="character-identity-meta">
+                {raceName} · vivió {ageYears} años
+                {character.gameMode === "linaje" && (
+                  <>
+                    {" "}
+                    · Modo Linaje: la continuidad por descendientes aún no está
+                    implementada.
+                  </>
+                )}
+              </p>
+            </section>
+          </div>
+        </div>
+        <Link to="/" className="back-link-floating">
+          ← Volver
+        </Link>
+      </div>
+    );
+  }
+
   const tabs = [
     {
       id: "personaje",

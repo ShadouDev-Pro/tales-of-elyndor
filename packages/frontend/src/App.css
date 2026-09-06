@@ -733,3 +733,11 @@ section.notice.character-list-section {
   flex: 1 0 auto;
   margin-bottom: 1.5rem;
 }
+
+.death-notice {
+  margin-top: 3rem;
+}
+
+.death-notice h2 {
+  color: var(--color-wine);
+}

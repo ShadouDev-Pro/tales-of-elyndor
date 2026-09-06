@@ -61,7 +61,7 @@ export function generatePersonality() {
  * Este es un punto de partida deliberadamente simple: rasgos, personalidad,
  * habilidades y origen se irán añadiendo de forma incremental.
  */
-export function createCharacter({ name, raceId, sex, birthRegion }) {
+export function createCharacter({ name, raceId, sex, birthRegion, gameMode = "vida_unica" }) {
   const race = getRaceById(raceId);
   if (!race) {
     throw new Error(`Raza desconocida: ${raceId}`);
@@ -75,6 +75,7 @@ export function createCharacter({ name, raceId, sex, birthRegion }) {
     raceId,
     sex,
     birthRegion: birthRegion ?? null,
+    gameMode,
     ageDays: yearsToDays(race.biology.lifespan.maturityAge ?? 16),
     attributes: generateAttributes(raceId),
     personality: generatePersonality(),

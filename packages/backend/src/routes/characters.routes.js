@@ -13,6 +13,9 @@ import {
   getEffectiveAttributeValue,
   practiceSkill,
   isValidLeafSkill,
+  checkDeathByOldAge,
+  DEATH_CAUSE_OLD_AGE,
+  getRaceById,
 } from "@toe/shared";
 
 import { pool } from "../db.js";
@@ -34,6 +37,9 @@ function rowToCharacter(row) {
     skills: row.habilidades,
     history: row.historial,
     createdAt: row.creado_en,
+    gameMode: row.modo_partida,
+    alive: row.vivo,
+    causeOfDeath: row.causa_muerte,
   };
 }
 
@@ -67,7 +73,7 @@ charactersRouter.get("/:id", async (req, res) => {
 
 // POST /api/characters  { name, raceId, sex, birthRegion }
 charactersRouter.post("/", async (req, res) => {
-  const { name, raceId, sex, birthRegion } = req.body ?? {};
+  const { name, raceId, sex, birthRegion, gameMode } = req.body ?? {};
 
   if (!name || !raceId) {
     return res.status(400).json({ error: "Se requieren al menos 'name' y 'raceId'." });
@@ -81,11 +87,11 @@ charactersRouter.post("/", async (req, res) => {
   }
 
   try {
-    const character = createCharacter({ name, raceId, sex, birthRegion });
+    const character = createCharacter({ name, raceId, sex, birthRegion, gameMode });
 
     const result = await pool.query(
-      `INSERT INTO personajes (nombre, raza_id, sexo, region_nacimiento, edad_dias, atributos, personalidad, rasgos, habilidades)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `INSERT INTO personajes (nombre, raza_id, sexo, region_nacimiento, edad_dias, atributos, personalidad, rasgos, habilidades, modo_partida)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING *`,
       [
         character.name,
@@ -97,7 +103,8 @@ charactersRouter.post("/", async (req, res) => {
         JSON.stringify(character.personality),
         JSON.stringify(character.traits),
         JSON.stringify(character.skills),
-      ]
+        character.gameMode,
+      ],
     );
 
     res.status(201).json(rowToCharacter(result.rows[0]));
@@ -122,7 +129,7 @@ charactersRouter.delete("/:id", async (req, res) => {
   }
 });
 
-/// POST /api/characters/:id/advance-time  { days }
+// POST /api/characters/:id/advance-time  { days }
 charactersRouter.post("/:id/advance-time", async (req, res) => {
   const { days } = req.body ?? {};
 
@@ -132,11 +139,15 @@ charactersRouter.post("/:id/advance-time", async (req, res) => {
 
   try {
     const current = await pool.query(
-      "SELECT nombre, edad_dias, rasgos, historial, personalidad, atributos, raza_id, modificadores_temporales FROM personajes WHERE id = $1",
+      "SELECT nombre, edad_dias, rasgos, historial, personalidad, atributos, raza_id, modificadores_temporales, vivo FROM personajes WHERE id = $1",
       [req.params.id]
     );
     if (current.rows.length === 0) {
       return res.status(404).json({ error: `Personaje "${req.params.id}" no encontrado.` });
+    }
+
+    if (!current.rows[0].vivo) {
+      return res.status(400).json({ error: "Este personaje ya ha fallecido." });
     }
 
     const {
@@ -150,13 +161,37 @@ charactersRouter.post("/:id/advance-time", async (req, res) => {
       modificadores_temporales: existingModifiers,
     } = current.rows[0];
 
+    const race = getRaceById(raceId);
+    const lifeExpectancy = race?.biology?.lifespan?.lifeExpectancy ?? 70;
+
+    const deathCheck = checkDeathByOldAge(currentAgeDays, days, lifeExpectancy);
+
+    if (deathCheck.died) {
+      const updatedHistory = [
+        ...existingHistory,
+        { ageDays: deathCheck.ageDaysAtDeath, text: `${nombre} falleció. ${DEATH_CAUSE_OLD_AGE}` },
+      ];
+
+      const result = await pool.query(
+        `UPDATE personajes
+         SET edad_dias = $1, historial = $2, vivo = false, causa_muerte = $3
+         WHERE id = $4
+         RETURNING *`,
+        [deathCheck.ageDaysAtDeath, JSON.stringify(updatedHistory), DEATH_CAUSE_OLD_AGE, req.params.id]
+      );
+
+      return res.json({
+        ...rowToCharacter(result.rows[0]),
+        newTrait: null,
+        newEvent: `${nombre} falleció. ${DEATH_CAUSE_OLD_AGE}`,
+      });
+    }
+
     const newAgeDays = currentAgeDays + days;
 
-    // 1. Probabilidad normal de rasgo nuevo, ponderada por personalidad.
     const newTraitId = rollForNewTrait(days, existingTraitIds, personality);
     let updatedTraitIds = newTraitId ? [...existingTraitIds, newTraitId] : existingTraitIds;
 
-    // 2. Acontecimiento, que puede traer efecto sobre rasgos y/o atributos.
     const event = rollForEvent(days, nombre);
     if (event?.traitEffect) {
       updatedTraitIds = applyTraitEffect(updatedTraitIds, event.traitEffect);
@@ -166,11 +201,8 @@ charactersRouter.post("/:id/advance-time", async (req, res) => {
       ? [...existingHistory, { ageDays: newAgeDays, text: event.text }]
       : existingHistory;
 
-    // 3. Crecimiento pasivo de atributos.
     let updatedAttributes = growAttributes(days, currentAttributes, raceId);
 
-    // 4. Limpiar modificadores temporales caducados, y aplicar el efecto
-    //    del acontecimiento sobre atributos (permanente o temporal).
     let updatedModifiers = pruneExpiredModifiers(existingModifiers, newAgeDays);
     if (event?.attributeEffect) {
       const result = applyAttributeEffect(

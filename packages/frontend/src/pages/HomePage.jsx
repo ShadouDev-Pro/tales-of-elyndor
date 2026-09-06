@@ -42,6 +42,7 @@ function HomePage() {
   const [character, setCharacter] = useState(null);
   const [creationError, setCreationError] = useState(null);
   const [characters, setCharacters] = useState([]);
+  const [gameMode, setGameMode] = useState("vida_unica");
 
   useEffect(() => {
     if (races && races.length > 0 && !selectedRaceId) {
@@ -75,6 +76,7 @@ function HomePage() {
           raceId: selectedRaceId,
           sex: characterSex,
           birthRegion: birthRegion || null,
+          gameMode,
         }),
       });
       if (!res.ok) {
@@ -157,6 +159,13 @@ function HomePage() {
                       >
                         <option value="masculino">Masculino</option>
                         <option value="femenino">Femenino</option>
+                      </select>
+                      <select
+                        value={gameMode}
+                        onChange={(event) => setGameMode(event.target.value)}
+                      >
+                        <option value="vida_unica">Vida única</option>
+                        <option value="linaje">Linaje</option>
                       </select>
                       <input
                         type="text"
