@@ -11,6 +11,8 @@ import {
   pruneExpiredModifiers,
   rollCheck,
   getEffectiveAttributeValue,
+  practiceSkill,
+  isValidLeafSkill,
 } from "@toe/shared";
 
 import { pool } from "../db.js";
@@ -240,5 +242,43 @@ charactersRouter.post("/:id/check", async (req, res) => {
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: "Error al resolver la tirada." });
+  }
+});
+
+// POST /api/characters/:id/practice-skill  { skillId }
+charactersRouter.post("/:id/practice-skill", async (req, res) => {
+  const { skillId } = req.body ?? {};
+
+  if (!skillId || !isValidLeafSkill(skillId)) {
+    return res.status(400).json({ error: `skillId inválido: "${skillId}".` });
+  }
+
+  try {
+    const current = await pool.query(
+      "SELECT habilidades FROM personajes WHERE id = $1",
+      [req.params.id]
+    );
+    if (current.rows.length === 0) {
+      return res.status(404).json({ error: `Personaje "${req.params.id}" no encontrado.` });
+    }
+
+    const skills = current.rows[0].habilidades ?? {};
+    const currentValue = skills[skillId] ?? 0;
+    const newValue = practiceSkill(currentValue);
+    const updatedSkills = { ...skills, [skillId]: newValue };
+
+    const result = await pool.query(
+      "UPDATE personajes SET habilidades = $1 WHERE id = $2 RETURNING habilidades",
+      [JSON.stringify(updatedSkills), req.params.id]
+    );
+
+    res.json({
+      skillId,
+      previousValue: currentValue,
+      newValue: result.rows[0].habilidades[skillId],
+      improved: newValue > currentValue,
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Error al practicar la habilidad." });
   }
 });

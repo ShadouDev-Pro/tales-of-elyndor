@@ -28,3 +28,5 @@ export {
 } from "./attributes-engine.js";
 
 export { attributeToModifier, rollCheck } from "./rolls.js";
+export { SKILLS, getSkillById, getLeafSkills, getSkillPath } from "./skills.js";
+export { practiceSkill, isValidLeafSkill } from "./skills-engine.js";
