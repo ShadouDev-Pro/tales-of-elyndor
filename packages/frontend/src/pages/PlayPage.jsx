@@ -44,6 +44,20 @@ function PlayPage() {
     }
   }
 
+  async function handleResolveDecision(optionId) {
+    try {
+      const res = await fetch(`/api/characters/${id}/resolve-decision`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ optionId }),
+      });
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      await refreshCharacter();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   if (error) {
     return (
       <div className="app">
@@ -180,9 +194,39 @@ function PlayPage() {
               )}
             </section>
 
-            <section className="notice play-column placeholder-notice">
+            <section
+              className={
+                character.pendingDecision
+                  ? "notice play-column"
+                  : "notice play-column placeholder-notice"
+              }
+            >
               <h2>Decisiones</h2>
-              <p className="empty-state">Próximamente.</p>
+              {character.pendingDecision ? (
+                <div className="decision-panel">
+                  <p className="decision-prompt">
+                    {character.pendingDecision.prompt.replace(
+                      "{name}",
+                      character.name,
+                    )}
+                  </p>
+                  <div className="decision-options">
+                    {character.pendingDecision.options.map((option) => (
+                      <button
+                        key={option.id}
+                        className="decision-option-button"
+                        onClick={() => handleResolveDecision(option.id)}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="empty-state">
+                  No hay ninguna decisión pendiente por ahora.
+                </p>
+              )}
             </section>
           </div>
 
@@ -201,12 +245,14 @@ function PlayPage() {
             <button
               className="time-button"
               onClick={() => handleAdvanceTime(365)}
+              disabled={!!character.pendingDecision}
             >
               +1 año
             </button>
             <button
               className="time-button"
               onClick={() => handleAdvanceTime(30)}
+              disabled={!!character.pendingDecision}
             >
               +1 mes
             </button>

@@ -16,6 +16,8 @@ import {
   checkDeathByOldAge,
   DEATH_CAUSE_OLD_AGE,
   getRaceById,
+  rollForDecision,
+  getDecisionById,
 } from "@toe/shared";
 
 import { pool } from "../db.js";
@@ -40,6 +42,9 @@ function rowToCharacter(row) {
     gameMode: row.modo_partida,
     alive: row.vivo,
     causeOfDeath: row.causa_muerte,
+    pendingDecision: row.decision_pendiente
+      ? getDecisionById(row.decision_pendiente)
+      : null,
   };
 }
 
@@ -139,7 +144,7 @@ charactersRouter.post("/:id/advance-time", async (req, res) => {
 
   try {
     const current = await pool.query(
-      "SELECT nombre, edad_dias, rasgos, historial, personalidad, atributos, raza_id, modificadores_temporales, vivo FROM personajes WHERE id = $1",
+      "SELECT nombre, edad_dias, rasgos, historial, personalidad, atributos, raza_id, modificadores_temporales, vivo, decision_pendiente FROM personajes WHERE id = $1",
       [req.params.id]
     );
     if (current.rows.length === 0) {
@@ -148,6 +153,14 @@ charactersRouter.post("/:id/advance-time", async (req, res) => {
 
     if (!current.rows[0].vivo) {
       return res.status(400).json({ error: "Este personaje ya ha fallecido." });
+    }
+
+    if (current.rows[0].decision_pendiente) {
+      return res
+        .status(400)
+        .json({
+          error: "Hay una decisión pendiente que resolver antes de continuar.",
+        });
     }
 
     const {
@@ -215,10 +228,12 @@ charactersRouter.post("/:id/advance-time", async (req, res) => {
       updatedModifiers = result.temporaryModifiers;
     }
 
+    const newDecisionId = rollForDecision(days);
+
     const result = await pool.query(
       `UPDATE personajes
-       SET edad_dias = $1, rasgos = $2, historial = $3, atributos = $4, modificadores_temporales = $5
-       WHERE id = $6
+       SET edad_dias = $1, rasgos = $2, historial = $3, atributos = $4, modificadores_temporales = $5, decision_pendiente = $6
+       WHERE id = $7
        RETURNING *`,
       [
         newAgeDays,
@@ -226,8 +241,9 @@ charactersRouter.post("/:id/advance-time", async (req, res) => {
         JSON.stringify(updatedHistory),
         JSON.stringify(updatedAttributes),
         JSON.stringify(updatedModifiers),
+        newDecisionId,
         req.params.id,
-      ]
+      ],
     );
 
     res.json({
@@ -312,5 +328,71 @@ charactersRouter.post("/:id/practice-skill", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: "Error al practicar la habilidad." });
+  }
+});
+
+// POST /api/characters/:id/resolve-decision  { optionId }
+charactersRouter.post("/:id/resolve-decision", async (req, res) => {
+  const { optionId } = req.body ?? {};
+
+  if (!optionId) {
+    return res.status(400).json({ error: "Se requiere 'optionId'." });
+  }
+
+  try {
+    const current = await pool.query(
+      "SELECT nombre, edad_dias, historial, atributos, modificadores_temporales, decision_pendiente FROM personajes WHERE id = $1",
+      [req.params.id]
+    );
+    if (current.rows.length === 0) {
+      return res.status(404).json({ error: `Personaje "${req.params.id}" no encontrado.` });
+    }
+
+    const {
+      nombre,
+      edad_dias: ageDays,
+      historial: existingHistory,
+      atributos: attributes,
+      modificadores_temporales: temporaryModifiers,
+      decision_pendiente: decisionId,
+    } = current.rows[0];
+
+    if (!decisionId) {
+      return res.status(400).json({ error: "Este personaje no tiene ninguna decisión pendiente." });
+    }
+
+    const decision = getDecisionById(decisionId);
+    const option = decision.options.find((o) => o.id === optionId);
+    if (!option) {
+      return res.status(400).json({ error: `Opción "${optionId}" no válida para esta decisión.` });
+    }
+
+    const attribute = attributes[option.attributeId];
+    const effectiveValue = getEffectiveAttributeValue(option.attributeId, attribute.actual, temporaryModifiers);
+
+    const rollResult = rollCheck({ attributeValue: effectiveValue, difficulty: option.difficulty });
+
+    const outcomeText = (rollResult.success ? option.successText : option.failureText).replace(
+      "{name}",
+      nombre
+    );
+
+    const updatedHistory = [...existingHistory, { ageDays, text: outcomeText }];
+
+    const result = await pool.query(
+      `UPDATE personajes
+       SET historial = $1, decision_pendiente = NULL
+       WHERE id = $2
+       RETURNING *`,
+      [JSON.stringify(updatedHistory), req.params.id]
+    );
+
+    res.json({
+      ...rowToCharacter(result.rows[0]),
+      rollResult,
+      outcomeText,
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Error al resolver la decisión." });
   }
 });
