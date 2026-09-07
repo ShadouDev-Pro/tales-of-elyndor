@@ -733,3 +733,43 @@ section.notice.character-list-section {
   flex: 1 0 auto;
   margin-bottom: 1.5rem;
 }
+
+.death-notice {
+  margin-top: 3rem;
+}
+
+.death-notice h2 {
+  color: var(--color-wine);
+}
+
+.decision-prompt {
+  font-style: italic;
+  margin: 0 0 0.75rem;
+}
+
+.decision-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.decision-option-button {
+  padding: 0.6rem 0.9rem;
+  border-radius: 6px;
+  border: 1px solid var(--color-wood);
+  background: var(--color-parchment-dark);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  text-align: left;
+  cursor: pointer;
+}
+
+.decision-option-button:hover {
+  border-color: var(--color-amber);
+  background: var(--color-amber-light);
+}
+
+.time-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

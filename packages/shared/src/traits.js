@@ -43,7 +43,8 @@ export const TRAITS = [
     id: "arrogante",
     name: "Arrogante",
     type: "negativo",
-    description: "Tiende a menospreciar a los demás o sobrevalorarse a sí mismo.",
+    description:
+      "Tiende a menospreciar a los demás o sobrevalorarse a sí mismo.",
     personalityAffinity: { dimensionId: "empatia", direction: "low" },
   },
   {
@@ -58,7 +59,18 @@ export const TRAITS = [
     type: "negativo",
     description: "Le cuesta confiar en las intenciones ajenas.",
     personalityAffinity: { dimensionId: "sociabilidad", direction: "low" },
+    conflictsWith: ["confiado"],
   },
+
+  {
+    id: "confiado",
+    name: "Confiado",
+    type: "positivo",
+    description: "Tiende a dar el beneficio de la duda y confiar en los demás.",
+    personalityAffinity: { dimensionId: "sociabilidad", direction: "high" },
+    conflictsWith: ["desconfiado"],
+  },
+
   {
     id: "generoso",
     name: "Generoso",
