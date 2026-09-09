@@ -25,6 +25,10 @@ export const DECISIONS = [
         difficulty: 12,
         successText: "{name} avanzó con destreza entre la maleza y ganó tiempo valioso.",
         failureText: "{name} tropezó varias veces entre las raíces y llegó agotado.",
+        successEffect: { attributeEffect: { attributeId: "agilidad", amount: 1, permanent: true } },
+        failureEffect: {
+          attributeEffect: { attributeId: "resistencia", amount: -2, permanent: false, durationDays: 60 },
+        },
       },
       {
         id: "rodeo",
@@ -33,6 +37,9 @@ export const DECISIONS = [
         difficulty: 10,
         successText: "{name} aguantó el largo trayecto sin mayor problema.",
         failureText: "{name} llegó exhausto tras la caminata, con los pies destrozados.",
+        failureEffect: {
+          attributeEffect: { attributeId: "resistencia", amount: -2, permanent: false, durationDays: 60 },
+        },
       },
     ],
   },
@@ -47,6 +54,8 @@ export const DECISIONS = [
         difficulty: 13,
         successText: "{name} logró calmar al comerciante y aclarar el malentendido.",
         failureText: "{name} no logró convencerlo, y la escena atrajo miradas incómodas.",
+        successEffect: { traitEffect: { type: "add", traitId: "carismatico" } },
+        failureEffect: { traitEffect: { type: "add", traitId: "desconfiado", removesTraitId: "confiado" } },
       },
       {
         id: "plantar_cara",
@@ -55,6 +64,8 @@ export const DECISIONS = [
         difficulty: 14,
         successText: "{name} se mantuvo firme y el comerciante acabó retrocediendo.",
         failureText: "{name} perdió los nervios, y la disputa escaló más de la cuenta.",
+        successEffect: { traitEffect: { type: "add", traitId: "valiente", removesTraitId: "cobarde" } },
+        failureEffect: { traitEffect: { type: "add", traitId: "cobarde", removesTraitId: "valiente" } },
       },
     ],
   },

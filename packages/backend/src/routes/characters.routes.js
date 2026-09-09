@@ -341,7 +341,7 @@ charactersRouter.post("/:id/resolve-decision", async (req, res) => {
 
   try {
     const current = await pool.query(
-      "SELECT nombre, edad_dias, historial, atributos, modificadores_temporales, decision_pendiente FROM personajes WHERE id = $1",
+      "SELECT nombre, edad_dias, historial, atributos, rasgos, modificadores_temporales, decision_pendiente FROM personajes WHERE id = $1",
       [req.params.id]
     );
     if (current.rows.length === 0) {
@@ -352,8 +352,9 @@ charactersRouter.post("/:id/resolve-decision", async (req, res) => {
       nombre,
       edad_dias: ageDays,
       historial: existingHistory,
-      atributos: attributes,
-      modificadores_temporales: temporaryModifiers,
+      atributos: existingAttributes,
+      rasgos: existingTraitIds,
+      modificadores_temporales: existingModifiers,
       decision_pendiente: decisionId,
     } = current.rows[0];
 
@@ -367,24 +368,45 @@ charactersRouter.post("/:id/resolve-decision", async (req, res) => {
       return res.status(400).json({ error: `Opción "${optionId}" no válida para esta decisión.` });
     }
 
-    const attribute = attributes[option.attributeId];
-    const effectiveValue = getEffectiveAttributeValue(option.attributeId, attribute.actual, temporaryModifiers);
+    const attribute = existingAttributes[option.attributeId];
+    const effectiveValue = getEffectiveAttributeValue(option.attributeId, attribute.actual, existingModifiers);
 
     const rollResult = rollCheck({ attributeValue: effectiveValue, difficulty: option.difficulty });
 
+    const outcome = rollResult.success ? option.successEffect : option.failureEffect;
     const outcomeText = (rollResult.success ? option.successText : option.failureText).replace(
       "{name}",
       nombre
     );
 
+    let updatedAttributes = existingAttributes;
+    let updatedModifiers = pruneExpiredModifiers(existingModifiers, ageDays);
+    let updatedTraitIds = existingTraitIds;
+
+    if (outcome?.attributeEffect) {
+      const result = applyAttributeEffect(updatedAttributes, updatedModifiers, outcome.attributeEffect, ageDays);
+      updatedAttributes = result.attributes;
+      updatedModifiers = result.temporaryModifiers;
+    }
+
+    if (outcome?.traitEffect) {
+      updatedTraitIds = applyTraitEffect(updatedTraitIds, outcome.traitEffect);
+    }
+
     const updatedHistory = [...existingHistory, { ageDays, text: outcomeText }];
 
     const result = await pool.query(
       `UPDATE personajes
-       SET historial = $1, decision_pendiente = NULL
-       WHERE id = $2
+       SET historial = $1, decision_pendiente = NULL, atributos = $2, modificadores_temporales = $3, rasgos = $4
+       WHERE id = $5
        RETURNING *`,
-      [JSON.stringify(updatedHistory), req.params.id]
+      [
+        JSON.stringify(updatedHistory),
+        JSON.stringify(updatedAttributes),
+        JSON.stringify(updatedModifiers),
+        JSON.stringify(updatedTraitIds),
+        req.params.id,
+      ]
     );
 
     res.json({
