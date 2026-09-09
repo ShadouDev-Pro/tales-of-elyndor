@@ -33,3 +33,14 @@ export { practiceSkill, isValidLeafSkill } from "./skills-engine.js";
 export { checkDeathByOldAge, DEATH_CAUSE_OLD_AGE } from "./mortality.js";
 export { DECISIONS, getDecisionById } from "./decisions.js";
 export { rollForDecision } from "./decisions-engine.js";
+
+export {
+  SOCIAL_CLASSES,
+  ECONOMIC_SITUATIONS,
+  EDUCATION_LEVELS,
+  RELIGION_LEVELS,
+  generateOrigin,
+} from "./origin.js";
+
+export { CHILDHOOD_EVENTS, getChildhoodEventById } from "./childhood-events.js";
+export { simulateChildhood } from "./childhood-engine.js";

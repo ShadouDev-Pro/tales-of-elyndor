@@ -19,7 +19,7 @@ export function rollForEvent(days, characterName) {
   const chosen = EVENTS[Math.floor(Math.random() * EVENTS.length)];
   return {
     id: chosen.id,
-    text: chosen.text.replace("{name}", characterName),
+    text: chosen.text.replaceAll("{name}", characterName),
     traitEffect: chosen.traitEffect ?? null,
     attributeEffect: chosen.attributeEffect ?? null,
   };

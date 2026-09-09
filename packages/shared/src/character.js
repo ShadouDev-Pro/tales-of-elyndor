@@ -2,6 +2,9 @@ import { ATTRIBUTES } from "./attributes.js";
 import { getRaceById } from "./races.js";
 import { PERSONALITY_DIMENSIONS } from "./personality.js";
 
+import { generateOrigin } from "./origin.js";
+import { simulateChildhood } from "./childhood-engine.js";
+
 const BASE_ATTRIBUTE_VALUE = 10;
 const BASE_POTENTIAL_VALUE = 60;
 const RANDOM_VARIATION = 4; // variación aleatoria +/- al generar un atributo
@@ -70,17 +73,22 @@ export function createCharacter({ name, raceId, sex, birthRegion, gameMode = "vi
     throw new Error(`La raza "${race.name}" no es jugable.`);
   }
 
+  const maturityAgeYears = race.biology.lifespan.maturityAge ?? 16;
+  const childhood = simulateChildhood(name, maturityAgeYears);
+
   return {
     name,
     raceId,
     sex,
     birthRegion: birthRegion ?? null,
     gameMode,
-    ageDays: yearsToDays(race.biology.lifespan.maturityAge ?? 16),
+    ageDays: yearsToDays(maturityAgeYears),
     attributes: generateAttributes(raceId),
     personality: generatePersonality(),
-    traits: [],
-    skills: [],
+    traits: childhood.traitIds,
+    skills: childhood.skills,
+    history: childhood.history,
+    origin: generateOrigin(),
   };
 }
 

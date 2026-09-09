@@ -205,7 +205,7 @@ function PlayPage() {
               {character.pendingDecision ? (
                 <div className="decision-panel">
                   <p className="decision-prompt">
-                    {character.pendingDecision.prompt.replace(
+                    {character.pendingDecision.prompt.replaceAll(
                       "{name}",
                       character.name,
                     )}

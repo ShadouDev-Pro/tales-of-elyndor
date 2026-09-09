@@ -40,6 +40,7 @@ function rowToCharacter(row) {
     history: row.historial,
     createdAt: row.creado_en,
     gameMode: row.modo_partida,
+    origin: row.origen,
     alive: row.vivo,
     causeOfDeath: row.causa_muerte,
     pendingDecision: row.decision_pendiente
@@ -95,8 +96,8 @@ charactersRouter.post("/", async (req, res) => {
     const character = createCharacter({ name, raceId, sex, birthRegion, gameMode });
 
     const result = await pool.query(
-      `INSERT INTO personajes (nombre, raza_id, sexo, region_nacimiento, edad_dias, atributos, personalidad, rasgos, habilidades, modo_partida)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      `INSERT INTO personajes (nombre, raza_id, sexo, region_nacimiento, edad_dias, atributos, personalidad, rasgos, habilidades, modo_partida, historial, origen)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        RETURNING *`,
       [
         character.name,
@@ -109,6 +110,8 @@ charactersRouter.post("/", async (req, res) => {
         JSON.stringify(character.traits),
         JSON.stringify(character.skills),
         character.gameMode,
+        JSON.stringify(character.history),
+        JSON.stringify(character.origin),
       ],
     );
 
@@ -374,10 +377,9 @@ charactersRouter.post("/:id/resolve-decision", async (req, res) => {
     const rollResult = rollCheck({ attributeValue: effectiveValue, difficulty: option.difficulty });
 
     const outcome = rollResult.success ? option.successEffect : option.failureEffect;
-    const outcomeText = (rollResult.success ? option.successText : option.failureText).replace(
-      "{name}",
-      nombre
-    );
+    const outcomeText = (
+      rollResult.success ? option.successText : option.failureText
+    ).replaceAll("{name}", nombre);
 
     let updatedAttributes = existingAttributes;
     let updatedModifiers = pruneExpiredModifiers(existingModifiers, ageDays);
