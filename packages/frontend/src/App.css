@@ -773,3 +773,10 @@ section.notice.character-list-section {
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+.character-origin-meta {
+  margin: 0.3rem 0 0;
+  font-size: 0.8rem;
+  color: var(--color-wood);
+  font-style: italic;
+}

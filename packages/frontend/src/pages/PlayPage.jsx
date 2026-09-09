@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { TRAITS } from "@toe/shared";
+import { TRAITS, SOCIAL_CLASSES, ECONOMIC_SITUATIONS, EDUCATION_LEVELS, RELIGION_LEVELS } from "@toe/shared";
 import { useApi } from "../hooks/useApi.js";
 import AttributeGrid from "../components/AttributeGrid.jsx";
 import CharacterHistory from "../components/CharacterHistory.jsx";
@@ -127,6 +127,33 @@ function PlayPage() {
               {raceName} · {character.sex} · {ageYears} años
               {character.birthRegion && <> · {character.birthRegion}</>}
             </p>
+            {character.origin && (
+              <p className="character-origin-meta">
+                {
+                  SOCIAL_CLASSES.find(
+                    (c) => c.id === character.origin.socialClass,
+                  )?.name
+                }{" "}
+                · Situación económica:{" "}
+                {
+                  ECONOMIC_SITUATIONS.find(
+                    (e) => e.id === character.origin.economicSituation,
+                  )?.name
+                }{" "}
+                · Educación:{" "}
+                {
+                  EDUCATION_LEVELS.find(
+                    (e) => e.id === character.origin.education,
+                  )?.name
+                }{" "}
+                · Religión:{" "}
+                {
+                  RELIGION_LEVELS.find(
+                    (r) => r.id === character.origin.religion,
+                  )?.name
+                }
+              </p>
+            )}
           </div>
         </div>
       ),
@@ -136,13 +163,18 @@ function PlayPage() {
       label: "Rasgos",
       content:
         character.traits.length === 0 ? (
-          <p className="empty-state">Todavía no ha desarrollado ningún rasgo.</p>
+          <p className="empty-state">
+            Todavía no ha desarrollado ningún rasgo.
+          </p>
         ) : (
           <div className="character-traits">
             {character.traits.map((traitId) => {
               const trait = TRAITS.find((t) => t.id === traitId);
               return (
-                <span key={traitId} className={`trait-badge trait-${trait?.type ?? "neutral"}`}>
+                <span
+                  key={traitId}
+                  className={`trait-badge trait-${trait?.type ?? "neutral"}`}
+                >
                   {trait?.name ?? traitId}
                 </span>
               );
