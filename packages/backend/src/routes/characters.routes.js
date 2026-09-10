@@ -18,6 +18,10 @@ import {
   getRaceById,
   rollForDecision,
   getDecisionById,
+  rollForRelationshipEvent,
+  generateInheritedAttributes,
+  generatePersonality,
+  generateOrigin,
 } from "@toe/shared";
 
 import { pool } from "../db.js";
@@ -41,8 +45,12 @@ function rowToCharacter(row) {
     createdAt: row.creado_en,
     gameMode: row.modo_partida,
     origin: row.origen,
+    relationshipStatus: row.estado_relacion,
+    partnerName: row.pareja_nombre,
+    children: row.hijos,
     alive: row.vivo,
     causeOfDeath: row.causa_muerte,
+    heirId: row.heredero_id,
     pendingDecision: row.decision_pendiente
       ? getDecisionById(row.decision_pendiente)
       : null,
@@ -147,7 +155,7 @@ charactersRouter.post("/:id/advance-time", async (req, res) => {
 
   try {
     const current = await pool.query(
-      "SELECT nombre, edad_dias, rasgos, historial, personalidad, atributos, raza_id, modificadores_temporales, vivo, decision_pendiente FROM personajes WHERE id = $1",
+      "SELECT nombre, edad_dias, rasgos, historial, personalidad, atributos, raza_id, modificadores_temporales, vivo, decision_pendiente, sexo, estado_relacion, pareja_nombre, hijos FROM personajes WHERE id = $1",
       [req.params.id]
     );
     if (current.rows.length === 0) {
@@ -175,6 +183,10 @@ charactersRouter.post("/:id/advance-time", async (req, res) => {
       atributos: currentAttributes,
       raza_id: raceId,
       modificadores_temporales: existingModifiers,
+      sexo: sex,
+      estado_relacion: relationshipStatus,
+      pareja_nombre: partnerName,
+      hijos: existingChildren,
     } = current.rows[0];
 
     const race = getRaceById(raceId);
@@ -185,15 +197,23 @@ charactersRouter.post("/:id/advance-time", async (req, res) => {
     if (deathCheck.died) {
       const updatedHistory = [
         ...existingHistory,
-        { ageDays: deathCheck.ageDaysAtDeath, text: `${nombre} falleció. ${DEATH_CAUSE_OLD_AGE}` },
+        {
+          ageDays: deathCheck.ageDaysAtDeath,
+          text: `${nombre} falleció. ${DEATH_CAUSE_OLD_AGE}`,
+        },
       ];
 
       const result = await pool.query(
         `UPDATE personajes
-         SET edad_dias = $1, historial = $2, vivo = false, causa_muerte = $3
-         WHERE id = $4
-         RETURNING *`,
-        [deathCheck.ageDaysAtDeath, JSON.stringify(updatedHistory), DEATH_CAUSE_OLD_AGE, req.params.id]
+     SET edad_dias = $1, historial = $2, vivo = false, causa_muerte = $3
+     WHERE id = $4
+     RETURNING *`,
+        [
+          deathCheck.ageDaysAtDeath,
+          JSON.stringify(updatedHistory),
+          DEATH_CAUSE_OLD_AGE,
+          req.params.id,
+        ],
       );
 
       return res.json({
@@ -233,18 +253,49 @@ charactersRouter.post("/:id/advance-time", async (req, res) => {
 
     const newDecisionId = rollForDecision(days);
 
+    const relationshipResult = rollForRelationshipEvent(
+      days,
+      { name: nombre, sex, relationshipStatus },
+      partnerName,
+    );
+
+    const updatedRelationshipStatus =
+      relationshipResult?.resultStatus ?? relationshipStatus;
+    const updatedPartnerName = relationshipResult?.partnerName ?? partnerName;
+    const updatedChildren = relationshipResult?.newChildName
+      ? [
+          ...existingChildren,
+          {
+            name: relationshipResult.newChildName,
+            sex: relationshipResult.newChildSex,
+            birthAgeDays: newAgeDays,
+          },
+        ]
+      : existingChildren;
+
+    const finalHistory = relationshipResult
+      ? [
+          ...updatedHistory,
+          { ageDays: newAgeDays, text: relationshipResult.text },
+        ]
+      : updatedHistory;
+
     const result = await pool.query(
       `UPDATE personajes
-       SET edad_dias = $1, rasgos = $2, historial = $3, atributos = $4, modificadores_temporales = $5, decision_pendiente = $6
-       WHERE id = $7
+       SET edad_dias = $1, rasgos = $2, historial = $3, atributos = $4, modificadores_temporales = $5, decision_pendiente = $6,
+           estado_relacion = $7, pareja_nombre = $8, hijos = $9
+       WHERE id = $10
        RETURNING *`,
       [
         newAgeDays,
         JSON.stringify(updatedTraitIds),
-        JSON.stringify(updatedHistory),
+        JSON.stringify(finalHistory),
         JSON.stringify(updatedAttributes),
         JSON.stringify(updatedModifiers),
         newDecisionId,
+        updatedRelationshipStatus,
+        updatedPartnerName,
+        JSON.stringify(updatedChildren),
         req.params.id,
       ],
     );
@@ -418,5 +469,73 @@ charactersRouter.post("/:id/resolve-decision", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: "Error al resolver la decisión." });
+  }
+});
+
+// POST /api/characters/:id/choose-heir  { childIndex }
+charactersRouter.post("/:id/choose-heir", async (req, res) => {
+  const { childIndex } = req.body ?? {};
+
+  if (!Number.isInteger(childIndex)) {
+    return res.status(400).json({ error: "Se requiere 'childIndex' (entero)." });
+  }
+
+  try {
+    const current = await pool.query(
+      "SELECT * FROM personajes WHERE id = $1",
+      [req.params.id]
+    );
+    if (current.rows.length === 0) {
+      return res.status(404).json({ error: `Personaje "${req.params.id}" no encontrado.` });
+    }
+
+    const deceased = rowToCharacter(current.rows[0]);
+
+    if (deceased.alive) {
+      return res.status(400).json({ error: "Este personaje sigue vivo." });
+    }
+    if (deceased.gameMode !== "linaje") {
+      return res.status(400).json({ error: "Solo se puede elegir heredero en modo Linaje." });
+    }
+    const heir = deceased.children[childIndex];
+    if (!heir) {
+      return res.status(400).json({ error: `No existe un hijo en la posición ${childIndex}.` });
+    }
+
+    const heirAgeDaysFromBirth = deceased.ageDays - heir.birthAgeDays;
+    const race = getRaceById(deceased.raceId);
+    const maturityAgeDays = (race?.biology?.lifespan?.maturityAge ?? 16) * 365;
+    const heirAgeDays = Math.max(heirAgeDaysFromBirth, maturityAgeDays);
+
+    const inheritedAttributes = generateInheritedAttributes(deceased.raceId, deceased.attributes);
+
+    const heirInsert = await pool.query(
+      `INSERT INTO personajes (nombre, raza_id, sexo, region_nacimiento, edad_dias, atributos, personalidad, rasgos, habilidades, modo_partida, historial, origen)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+       RETURNING id`,
+      [
+        heir.name,
+        deceased.raceId,
+        heir.sex,
+        deceased.birthRegion,
+        heirAgeDays,
+        JSON.stringify(inheritedAttributes),
+        JSON.stringify(generatePersonality()),
+        JSON.stringify([]),
+        JSON.stringify({}),
+        "linaje",
+        JSON.stringify([
+          { ageDays: heirAgeDays, text: `${heir.name} heredó el legado de ${deceased.name}.` },
+        ]),
+        JSON.stringify(generateOrigin()),
+      ]
+    );
+
+    const heirId = heirInsert.rows[0].id;
+    await pool.query("UPDATE personajes SET heredero_id = $1 WHERE id = $2", [heirId, req.params.id]);
+
+    res.json({ heirId });
+  } catch (error) {
+    res.status(500).json({ error: "Error al elegir heredero." });
   }
 });

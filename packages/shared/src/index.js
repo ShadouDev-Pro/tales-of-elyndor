@@ -44,3 +44,7 @@ export {
 
 export { CHILDHOOD_EVENTS, getChildhoodEventById } from "./childhood-events.js";
 export { simulateChildhood } from "./childhood-engine.js";
+export { MALE_NAMES, FEMALE_NAMES, generateName, oppositeSex } from "./names.js";
+export { RELATIONSHIP_EVENTS, getRelationshipEventsForStatus } from "./relationship-events.js";
+export { rollForRelationshipEvent } from "./relationship-engine.js";
+export { generateInheritedAttributes } from "./heredity.js";

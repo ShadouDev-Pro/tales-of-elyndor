@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { TRAITS, SOCIAL_CLASSES, ECONOMIC_SITUATIONS, EDUCATION_LEVELS, RELIGION_LEVELS } from "@toe/shared";
 import { useApi } from "../hooks/useApi.js";
 import AttributeGrid from "../components/AttributeGrid.jsx";
@@ -9,12 +9,14 @@ import TabNavBar from "../components/TabNavBar.jsx";
 
 function PlayPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { data: races } = useApi("/api/races?playable=true");
   const { data: attributeDefinitions } = useApi("/api/attributes");
 
   const [character, setCharacter] = useState(null);
   const [error, setError] = useState(null);
   const [activeTabId, setActiveTabId] = useState("personaje");
+  const [choosingHeir, setChoosingHeir] = useState(false);
 
   async function refreshCharacter() {
     try {
@@ -58,6 +60,21 @@ function PlayPage() {
     }
   }
 
+  async function handleChooseHeir(childIndex) {
+    try {
+      const res = await fetch(`/api/characters/${id}/choose-heir`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ childIndex }),
+      });
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      const { heirId } = await res.json();
+      navigate(`/jugar/${heirId}`);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   if (error) {
     return (
       <div className="app">
@@ -96,14 +113,50 @@ function PlayPage() {
               <p>{character.causeOfDeath}</p>
               <p className="character-identity-meta">
                 {raceName} · vivió {ageYears} años
-                {character.gameMode === "linaje" && (
-                  <>
-                    {" "}
-                    · Modo Linaje: la continuidad por descendientes aún no está
-                    implementada.
-                  </>
-                )}
               </p>
+
+              {character.heirId && (
+                <Link
+                  to={`/jugar/${character.heirId}`}
+                  className="seal-button-img-link"
+                >
+                  Continuar la partida
+                </Link>
+              )}
+
+              {character.gameMode === "linaje" &&
+                !character.heirId &&
+                character.children.length === 0 && (
+                  <p className="character-identity-meta">
+                    Sin descendientes con los que continuar.
+                  </p>
+                )}
+
+              {character.gameMode === "linaje" &&
+                !character.heirId &&
+                character.children.length > 0 &&
+                !choosingHeir && (
+                  <button
+                    className="seal-button-img-link"
+                    onClick={() => setChoosingHeir(true)}
+                  >
+                    Elegir heredero
+                  </button>
+                )}
+
+              {choosingHeir && !character.heirId && (
+                <div className="decision-options">
+                  {character.children.map((child, index) => (
+                    <button
+                      key={index}
+                      className="decision-option-button"
+                      onClick={() => handleChooseHeir(index)}
+                    >
+                      {child.name} ({child.sex})
+                    </button>
+                  ))}
+                </div>
+              )}
             </section>
           </div>
         </div>
@@ -154,6 +207,19 @@ function PlayPage() {
                 }
               </p>
             )}
+            <p className="character-relationship-meta">
+              {character.relationshipStatus === "soltero" && "Soltero/a"}
+              {character.relationshipStatus === "conociendo" &&
+                `Conociendo a ${character.partnerName}`}
+              {character.relationshipStatus === "pareja" &&
+                `En pareja con ${character.partnerName}`}
+              {character.children.length > 0 && (
+                <>
+                  {" "}
+                  · Hijos: {character.children.map((c) => c.name).join(", ")}
+                </>
+              )}
+            </p>
           </div>
         </div>
       ),

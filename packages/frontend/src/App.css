@@ -780,3 +780,10 @@ section.notice.character-list-section {
   color: var(--color-wood);
   font-style: italic;
 }
+
+.character-relationship-meta {
+  margin: 0.3rem 0 0;
+  font-size: 0.8rem;
+  color: var(--color-wood);
+  font-style: italic;
+}
