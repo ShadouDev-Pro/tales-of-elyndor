@@ -118,7 +118,7 @@ function PlayPage() {
               {character.heirId && (
                 <Link
                   to={`/jugar/${character.heirId}`}
-                  className="seal-button-img-link"
+                  className="heir-continue-button"
                 >
                   Continuar la partida
                 </Link>
@@ -137,7 +137,7 @@ function PlayPage() {
                 character.children.length > 0 &&
                 !choosingHeir && (
                   <button
-                    className="seal-button-img-link"
+                    className="heir-continue-button"
                     onClick={() => setChoosingHeir(true)}
                   >
                     Elegir heredero
@@ -145,14 +145,19 @@ function PlayPage() {
                 )}
 
               {choosingHeir && !character.heirId && (
-                <div className="decision-options">
+                <div className="heir-list">
                   {character.children.map((child, index) => (
                     <button
                       key={index}
-                      className="decision-option-button"
+                      className="heir-card-button"
                       onClick={() => handleChooseHeir(index)}
                     >
-                      {child.name} ({child.sex})
+                      <RaceIcon
+                        raceId={character.raceId}
+                        className="heir-card-icon"
+                      />
+                      <span className="heir-card-name">{child.name}</span>
+                      <span className="heir-card-meta">{child.sex}</span>
                     </button>
                   ))}
                 </div>

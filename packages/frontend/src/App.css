@@ -787,3 +787,71 @@ section.notice.character-list-section {
   color: var(--color-wood);
   font-style: italic;
 }
+
+.heir-continue-button {
+  display: inline-block;
+  margin-top: 1.25rem;
+  padding: 0.6rem 1.4rem;
+  border: 1px solid var(--color-wood-dark);
+  border-radius: 999px;
+  background: radial-gradient(circle at 35% 30%, var(--color-wine) 0%, #5a1f1f 70%, #3d1414 100%);
+  color: #f2e6d8;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 3px 6px rgba(43, 27, 18, 0.4);
+  transition: transform 0.1s ease;
+}
+
+.heir-continue-button:hover {
+  transform: translateY(-1px);
+}
+
+.heir-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.heir-card-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  width: 130px;
+  padding: 0.9rem 0.6rem;
+  border: 1px solid var(--color-wood);
+  border-radius: 6px;
+  background: var(--color-parchment-dark);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  cursor: pointer;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.heir-card-button:hover {
+  border-color: var(--color-amber);
+  background: var(--color-amber-light);
+}
+
+.heir-card-icon {
+  width: 30px;
+  height: 30px;
+  color: var(--color-wood);
+}
+
+.heir-card-name {
+  font-family: var(--font-display);
+  font-size: 1rem;
+}
+
+.heir-card-meta {
+  font-size: 0.75rem;
+  color: var(--color-wood);
+  text-transform: capitalize;
+}
