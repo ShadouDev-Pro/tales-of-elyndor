@@ -155,7 +155,7 @@ charactersRouter.post("/:id/advance-time", async (req, res) => {
 
   try {
     const current = await pool.query(
-      "SELECT nombre, edad_dias, rasgos, historial, personalidad, atributos, raza_id, modificadores_temporales, vivo, decision_pendiente, sexo, estado_relacion, pareja_nombre, hijos FROM personajes WHERE id = $1",
+      "SELECT nombre, edad_dias, rasgos, historial, personalidad, atributos, raza_id, modificadores_temporales, vivo, decision_pendiente, sexo, estado_relacion, pareja_nombre, hijos, origen FROM personajes WHERE id = $1",
       [req.params.id]
     );
     if (current.rows.length === 0) {
@@ -187,6 +187,7 @@ charactersRouter.post("/:id/advance-time", async (req, res) => {
       estado_relacion: relationshipStatus,
       pareja_nombre: partnerName,
       hijos: existingChildren,
+      origen: origin,
     } = current.rows[0];
 
     const race = getRaceById(raceId);
@@ -251,7 +252,11 @@ charactersRouter.post("/:id/advance-time", async (req, res) => {
       updatedModifiers = result.temporaryModifiers;
     }
 
-    const newDecisionId = rollForDecision(days);
+    const newDecisionId = rollForDecision(days, {
+      raceId,
+      education: origin?.education,
+      religion: origin?.religion,
+    });
 
     const relationshipResult = rollForRelationshipEvent(
       days,
