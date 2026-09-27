@@ -42,6 +42,7 @@ export const RACES = [
       ],
     },
     attributeAffinities: {},
+    fertility: { chancePerYear: 0.06, fertileWindowYears: 25, maxChildren: 4 },
   },
   {
     id: "elfo",
@@ -70,6 +71,7 @@ export const RACES = [
       ],
     },
     attributeAffinities: { percepcion: 1 },
+    fertility: { chancePerYear: 0.02, fertileWindowYears: 60, maxChildren: 2 },
   },
   {
     id: "enano",
@@ -97,6 +99,7 @@ export const RACES = [
       ],
     },
     attributeAffinities: { fuerza: 1, resistencia: 1 },
+    fertility: { chancePerYear: 0.04, fertileWindowYears: 40, maxChildren: 3 },
   },
   {
     id: "mediano",
@@ -122,6 +125,7 @@ export const RACES = [
       ],
     },
     attributeAffinities: { percepcion: 1 },
+    fertility: { chancePerYear: 0.07, fertileWindowYears: 20, maxChildren: 5 },
   },
   {
     id: "gnomo",
@@ -145,6 +149,7 @@ export const RACES = [
       ],
     },
     attributeAffinities: { intelecto: 1 },
+    fertility: { chancePerYear: 0.04, fertileWindowYears: 35, maxChildren: 3 },
   },
   {
     id: "orco",
@@ -168,6 +173,7 @@ export const RACES = [
       ],
     },
     attributeAffinities: { fuerza: 1 },
+    fertility: { chancePerYear: 0.10, fertileWindowYears: 15, maxChildren: 6 },
   },
   {
     id: "goblin",
@@ -190,6 +196,7 @@ export const RACES = [
       ],
     },
     attributeAffinities: { agilidad: 1 },
+    fertility: { chancePerYear: 0.12, fertileWindowYears: 15, maxChildren: 7 },
   },
   {
     id: "troll",
@@ -220,6 +227,7 @@ export const RACES = [
       ],
     },
     attributeAffinities: { resistencia: 1 },
+    fertility: { chancePerYear: 0.03, fertileWindowYears: 50, maxChildren: 3 },
   },
   {
     id: "beastfolk_felino",
@@ -245,6 +253,7 @@ export const RACES = [
       ],
     },
     attributeAffinities: { agilidad: 1, percepcion: 1 },
+    fertility: { chancePerYear: 0.06, fertileWindowYears: 20, maxChildren: 4 },
   },
   {
     id: "dragon",

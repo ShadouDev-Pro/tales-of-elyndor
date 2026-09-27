@@ -155,7 +155,7 @@ charactersRouter.post("/:id/advance-time", async (req, res) => {
 
   try {
     const current = await pool.query(
-      "SELECT nombre, edad_dias, rasgos, historial, personalidad, atributos, raza_id, modificadores_temporales, vivo, decision_pendiente, sexo, estado_relacion, pareja_nombre, hijos, origen FROM personajes WHERE id = $1",
+      "SELECT nombre, edad_dias, rasgos, historial, personalidad, atributos, raza_id, modificadores_temporales, vivo, decision_pendiente, sexo, estado_relacion, pareja_nombre, hijos, origen, modo_partida FROM personajes WHERE id = $1",
       [req.params.id]
     );
     if (current.rows.length === 0) {
@@ -188,6 +188,7 @@ charactersRouter.post("/:id/advance-time", async (req, res) => {
       pareja_nombre: partnerName,
       hijos: existingChildren,
       origen: origin,
+      modo_partida: modo_partida,
     } = current.rows[0];
 
     const race = getRaceById(raceId);
@@ -258,10 +259,25 @@ charactersRouter.post("/:id/advance-time", async (req, res) => {
       religion: origin?.religion,
     });
 
+    const maturityAgeYears = race?.biology?.lifespan?.maturityAge ?? 16;
+    const currentAgeYears = Math.floor(newAgeDays / 365);
+    const yearsSinceMaturity = currentAgeYears - maturityAgeYears;
+
+    const wantsGuaranteedHeir =
+      modo_partida === "linaje" && existingChildren.length === 0;
+
     const relationshipResult = rollForRelationshipEvent(
       days,
-      { name: nombre, sex, relationshipStatus },
+      {
+        name: nombre,
+        sex,
+        relationshipStatus,
+        yearsSinceMaturity,
+        wantsGuaranteedHeir,
+      },
       partnerName,
+      race?.fertility,
+      existingChildren.length,
     );
 
     const updatedRelationshipStatus =
